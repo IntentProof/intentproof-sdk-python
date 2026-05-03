@@ -1,0 +1,61 @@
+# Publish to PyPI when you push a release tag that matches [project].version in pyproject.toml.
+#
+# 1. Bump [project].version in pyproject.toml and merge to main.
+# 2. Create an annotated tag whose name is v plus that exact version (e.g. 0.2.0 -> v0.2.0).
+# 3. git push origin vX.Y.Z — this workflow verifies the tag matches pyproject.toml, then uploads.
+#
+# Configure PyPI “Trusted Publisher” for this workflow (OIDC; no PyPI token in GitHub secrets):
+# https://docs.pypi.org/trusted-publishers/
+# Optional: set `environment: pypi` on the job and use the same name in PyPI for release approvals.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-python-pip
+        with:
+          python-version: "3.x"
+          check-latest: true
+
+      - name: Verify tag matches pyproject.toml version
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          python << 'PY'
+          import os
+          import tomllib
+
+          tag = os.environ["TAG_NAME"]
+          if not tag.startswith("v"):
+              raise SystemExit(f"Tag must start with v, got {tag!r}")
+          with open("pyproject.toml", "rb") as f:
+              project = tomllib.load(f)["project"]
+          version = str(project["version"])
+          if tag.removeprefix("v") != version:
+              raise SystemExit(
+                  f"Tag {tag!r} must match [project].version {version!r} in pyproject.toml"
+              )
+          PY
+
+      - name: Install build
+        run: pip install "build>=1.2"
+
+      - name: Build sdist and wheel
+        run: python -m build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/

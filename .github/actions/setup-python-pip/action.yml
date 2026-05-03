@@ -1,0 +1,24 @@
+# Shared setup-python + pip dependency cache for workflows (DRY).
+name: Setup Python with pip cache
+description: >-
+  Runs actions/setup-python with pip cache keyed on pyproject.toml and tox.ini.
+
+inputs:
+  python-version:
+    description: VersionSpec passed to setup-python (e.g. 3.14 or 3.x)
+    required: true
+  check-latest:
+    description: Whether setup-python should resolve the latest patch
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+        check-latest: ${{ inputs.check-latest == 'true' }}
+        cache: pip
+        cache-dependency-path: |
+          pyproject.toml
+          tox.ini

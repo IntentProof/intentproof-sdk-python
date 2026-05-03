@@ -1,0 +1,93 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+# --- Project metadata (PEP 621) ------------------------------------------------
+
+[project]
+name = "intentproof-sdk"
+version = "0.1.0"
+description = "Verifiable execution records: intent, action, and proof for every wrapped call."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+authors = [{ name = "IntentProof contributors" }]
+keywords = ["observability", "audit", "tracing", "intent", "verification"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Typing :: Typed",
+]
+
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "build>=1.2",
+  "coverage[toml]>=7.4",
+  "pip-audit>=2.7",
+  "pytest>=8.0",
+  "pytest-asyncio>=0.24",
+  "pytest-cov>=6.0",
+  "ruff>=0.8",
+  "tox>=4",
+]
+
+[project.urls]
+Homepage = "https://github.com/intentproof/intentproof-sdk-python"
+Repository = "https://github.com/intentproof/intentproof-sdk-python"
+Issues = "https://github.com/intentproof/intentproof-sdk-python/issues"
+
+# --- Hatchling (wheel & sdist) -------------------------------------------------
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/intentproof"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/LICENSE",
+  "/README.md",
+  "/pyproject.toml",
+  "/src",
+]
+
+# --- Pytest & coverage ---------------------------------------------------------
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = ["--import-mode=importlib"]
+
+[tool.coverage.run]
+source_pkgs = ["intentproof"]
+branch = false
+
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
+exclude_lines = [
+  "pragma: no cover",
+  "if TYPE_CHECKING:",
+  "\\.\\.\\.",
+]
+
+# --- Ruff ----------------------------------------------------------------------
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]

@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-python-pip
+        with:
+          python-version: "3.x"
+          check-latest: true
+
+      - name: Install project (dev extras)
+        run: pip install -e ".[dev]"
+
+      - name: pip-audit
+        run: pip-audit
+
+  tox:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - tox-env: static
+            python-version: "3.x"
+            check-latest: true
+          - tox-env: cov
+            python-version: "3.x"
+            check-latest: true
+          - tox-env: py311
+            python-version: "3.11"
+            check-latest: false
+          - tox-env: py312
+            python-version: "3.12"
+            check-latest: false
+          - tox-env: py313
+            python-version: "3.13"
+            check-latest: false
+          - tox-env: py314
+            python-version: "3.14"
+            check-latest: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-python-pip
+        with:
+          python-version: ${{ matrix.python-version }}
+          check-latest: ${{ matrix.check-latest }}
+
+      - name: Install tox
+        run: pip install "tox>=4"
+
+      - name: Run tox
+        run: tox run -e ${{ matrix.tox-env }}

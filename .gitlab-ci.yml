@@ -1,0 +1,46 @@
+# Mirrors GitHub Actions: audit, tox lint, version matrix smoke runs.
+
+stages:
+  - audit
+  - lint
+  - test
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+audit:
+  stage: audit
+  image: python:latest
+  cache:
+    key: pip-audit
+    paths:
+      - .cache/pip
+  script:
+    - pip install -e ".[dev]"
+    - pip-audit
+
+lint:
+  stage: lint
+  image: python:latest
+  cache:
+    key: pip-lint
+    paths:
+      - .cache/pip
+  script:
+    - pip install "tox>=4"
+    - tox run -e static
+
+test:
+  stage: test
+  parallel:
+    matrix:
+      - PYTHON_VERSION: ["3.11", "3.12", "3.13", "3.14"]
+  image: python:${PYTHON_VERSION}
+  cache:
+    key: pip-${PYTHON_VERSION}
+    paths:
+      - .cache/pip
+  script:
+    - pip install "tox>=4"
+    - export TOX_ENV="py$(echo "$PYTHON_VERSION" | tr -d '.')"
+    - tox run -e "$TOX_ENV"
