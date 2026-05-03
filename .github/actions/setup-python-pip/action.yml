@@ -22,3 +22,7 @@ runs:
         cache-dependency-path: |
           pyproject.toml
           tox.ini
+
+    - name: Upgrade pip (CVE fixes in 26.1+, e.g. CVE-2026-3219 / CVE-2026-6357)
+      shell: bash
+      run: python -m pip install -U "pip>=26.1"
