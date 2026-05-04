@@ -7,13 +7,13 @@ build-backend = "hatchling.build"
 [project]
 name = "intentproof-sdk"
 version = "0.1.0"
-description = "Verifiable execution records: intent, action, and proof for every wrapped call."
+description = "IntentProof: verifiable execution records—intent, action, and proof for every wrapped call."
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 requires-python = ">=3.11"
 authors = [{ name = "IntentProof contributors" }]
-keywords = ["observability", "audit", "tracing", "intent", "verification"]
+keywords = ["IntentProof", "intentproof", "observability", "audit", "tracing", "intent", "verification"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",

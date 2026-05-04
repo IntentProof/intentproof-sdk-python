@@ -10,6 +10,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  intentproof-spec:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: intentproof/intentproof-spec
+          path: intentproof-spec
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: intentproof-spec/.nvmrc
+          cache: npm
+          cache-dependency-path: intentproof-spec/package-lock.json
+
+      - name: Canonical spec conformance (Vitest oracle)
+        run: bash intentproof-spec/scripts/run-conformance.sh intentproof-spec
+
   audit:
     runs-on: ubuntu-latest
     steps:
