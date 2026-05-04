@@ -6,6 +6,8 @@ All notable changes to this repository are documented here. **PyPI** releases us
 
 ## Unreleased
 
+## 0.1.1 — 2026-05-04
+
 - **Security:** upgrade **pip** to **≥26.1** after Python setup in the composite **`.github/actions/setup-python-pip`** action, and in the default **`[testenv]`** via **`commands_pre`**, addressing **CVE-2026-3219** and **CVE-2026-6357**.
 - **CI:** add **`intentproof-spec`** job—checkout [`intentproof-spec`](https://github.com/intentproof/intentproof-spec) and run **`scripts/run-conformance.sh`** (canonical Vitest conformance oracle).
 - **Local spec checks:** add **`scripts/spec-conformance.sh`** and **`tox -e spec`** (sibling **`../intentproof-spec`** or **`INTENTPROOF_SPEC_ROOT`**).
