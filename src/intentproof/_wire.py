@@ -2,27 +2,26 @@ from __future__ import annotations
 
 from typing import Any
 
+from intentproof.generated.execution_event import ExecutionError
 from intentproof.types import ExecutionEvent
+
+
+def execution_error_to_wire(err: ExecutionError) -> dict[str, Any]:
+    return err.model_dump(mode="json", exclude_none=True)
 
 
 def execution_event_to_wire(event: ExecutionEvent) -> dict[str, Any]:
     """Wire / verifier shape (camelCase); omits unset optional fields for compact JSON."""
-    out: dict[str, Any] = {
-        "id": event.id,
-        "intent": event.intent,
-        "action": event.action,
-        "inputs": event.inputs,
-        "status": event.status,
-        "startedAt": event.started_at,
-        "completedAt": event.completed_at,
-        "durationMs": event.duration_ms,
-    }
-    if event.correlation_id is not None:
-        out["correlationId"] = event.correlation_id
-    if event.status == "ok" or event.output is not None:
-        out["output"] = event.output
-    if event.error is not None:
-        out["error"] = event.error
-    if event.attributes is not None and len(event.attributes) > 0:
-        out["attributes"] = event.attributes
-    return out
+    data = event.model_dump(by_alias=True, mode="json", exclude_none=True)
+    # Whole milliseconds as int (schema ``number`` allows float; wire prefers integers).
+    dm = data.get("durationMs")
+    if dm is not None:
+        data["durationMs"] = int(dm)
+    st = data["status"]
+    if st == "ok" and "output" not in data:
+        data["output"] = None
+    elif st != "ok" and data.get("output") is None:
+        data.pop("output", None)
+    if not data.get("attributes"):
+        data.pop("attributes", None)
+    return data

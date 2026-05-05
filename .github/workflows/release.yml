@@ -15,8 +15,56 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: read
+  checks: read
+
 jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Verify required CI checks passed on release SHA
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const requiredExact = ["no-handwritten-model-types", "hardening", "intentproof-spec", "spec-golden-parity"];
+            const requiredPrefixes = ["tox (static", "tox (cov"];
+            const { owner, repo } = context.repo;
+            const ref = context.sha;
+            const runs = await github.paginate(github.rest.checks.listForRef, {
+              owner,
+              repo,
+              ref,
+              per_page: 100,
+            });
+            const names = runs.map((r) => `${r.name}:${r.conclusion ?? r.status}`);
+            core.info(`check-runs on ${ref}: ${names.join(", ")}`);
+            for (const name of requiredExact) {
+              const matches = runs.filter((r) => r.name === name);
+              if (matches.length === 0) {
+                core.setFailed(`Missing required check-run: ${name}`);
+                continue;
+              }
+              const ok = matches.some((r) => r.conclusion === "success");
+              if (!ok) {
+                core.setFailed(`Required check-run not successful: ${name}`);
+              }
+            }
+            for (const prefix of requiredPrefixes) {
+              const matches = runs.filter((r) => r.name.startsWith(prefix));
+              if (matches.length === 0) {
+                core.setFailed(`Missing required check-run prefix: ${prefix}`);
+                continue;
+              }
+              const ok = matches.some((r) => r.conclusion === "success");
+              if (!ok) {
+                core.setFailed(`Required check-run prefix not successful: ${prefix}`);
+              }
+            }
+
   publish:
+    needs: preflight
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -24,10 +72,20 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: actions/checkout@v6
+        with:
+          repository: IntentProof/intentproof-spec
+          path: intentproof-spec
+
       - uses: ./.github/actions/setup-python-pip
         with:
           python-version: "3.x"
           check-latest: true
+
+      - name: No handwritten model/types outside generated schema package
+        env:
+          INTENTPROOF_SPEC_ROOT: ${{ github.workspace }}/intentproof-spec
+        run: bash scripts/check-no-handwritten-model-types.sh
 
       - name: Verify tag matches pyproject.toml version
         env:

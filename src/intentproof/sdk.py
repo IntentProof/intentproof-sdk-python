@@ -12,7 +12,10 @@ from typing import Any, TypeVar, cast
 
 from intentproof._correlation import assert_correlation_id, correlation_scope, get_correlation_id
 from intentproof._time import utc_iso_ms
+from intentproof._wire import execution_event_to_wire
 from intentproof.exporters import Exporter, MemoryExporter
+from intentproof.generated.execution_event import ExecutionError, Status
+from intentproof.schema_validate import assert_valid_execution_event_wire
 from intentproof.snapshot import snapshot
 from intentproof.types import UNDEFINED, Attributes, ExecutionEvent, IntentProofConfig
 from intentproof.validation import (
@@ -59,16 +62,14 @@ def _default_inputs(args: tuple[Any, ...], kwargs: dict[str, Any], sopts: Any) -
     sk = sopts.snapshot_kwargs()
     if kwargs:
         return snapshot({"args": list(args), "kwargs": kwargs}, **sk)
-    return snapshot(list(args), **sk)
+    return snapshot({"args": list(args)}, **sk)
 
 
-def _to_error_snapshot(exc: BaseException, include_stack: bool) -> dict[str, Any]:
+def _to_error_snapshot(exc: BaseException, include_stack: bool) -> ExecutionError:
     if isinstance(exc, Exception):
-        snap: dict[str, Any] = {"name": exc.__class__.__name__, "message": str(exc)}
-        if include_stack:
-            snap["stack"] = "".join(traceback.format_exception(exc))
-        return snap
-    return {"name": "Error", "message": str(exc)}
+        stack = "".join(traceback.format_exception(exc)) if include_stack else None
+        return ExecutionError(name=exc.__class__.__name__, message=str(exc), stack=stack)
+    return ExecutionError(name="Error", message=str(exc))
 
 
 def _maybe_schedule_awaitable(
@@ -249,6 +250,7 @@ class IntentProofClient:
         return get_correlation_id()
 
     def _emit_exporters(self, event: ExecutionEvent) -> None:
+        assert_valid_execution_event_wire(execution_event_to_wire(event))
         for exp in self._exporters:
             try:
                 r = exp.export(event)
@@ -272,18 +274,19 @@ class IntentProofClient:
         correlation_id: str | None,
         wrap_attrs: Attributes | None,
         output: Any | None,
-        error: dict[str, Any] | None,
+        error: ExecutionError | None,
     ) -> ExecutionEvent:
         attrs = merge_attrs(self._default_attributes, wrap_attrs)
+        st = Status(status) if isinstance(status, str) else status
         return ExecutionEvent(
             id=str(uuid.uuid4()),
             intent=intent,
             action=action,
             inputs=inputs,
-            status=cast(Any, status),
+            status=st,
             started_at=started,
             completed_at=completed,
-            duration_ms=duration_ms,
+            duration_ms=int(duration_ms),
             correlation_id=correlation_id,
             output=output,
             error=error,
