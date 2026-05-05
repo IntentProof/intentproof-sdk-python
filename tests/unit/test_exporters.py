@@ -17,19 +17,19 @@ from intentproof.exporters import (
     MemoryExporter,
     safe_json_envelope,
 )
-from intentproof.types import ExecutionEvent
+from intentproof.types import ExecutionEvent, Status
 
 
 def ev(**kw: object) -> ExecutionEvent:
-    fields = {
+    fields: dict[str, object] = {
         "id": "e",
         "intent": "i",
         "action": "a",
         "inputs": {},
-        "status": "ok",
-        "started_at": "s",
-        "completed_at": "c",
-        "duration_ms": 0,
+        "status": Status.ok,
+        "started_at": "2020-01-01T00:00:00.000Z",
+        "completed_at": "2020-01-01T00:00:01.000Z",
+        "duration_ms": 0.0,
     }
     fields.update(kw)
     return ExecutionEvent(**fields)

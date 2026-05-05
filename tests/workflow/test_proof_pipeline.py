@@ -18,6 +18,7 @@ from intentproof import (
     IntentProofClient,
     IntentProofConfig,
     MemoryExporter,
+    Status,
     run_with_correlation_id,
 )
 from intentproof.exporters import (
@@ -27,7 +28,9 @@ from intentproof.exporters import (
     safe_json_envelope,
 )
 
-_ISO_MS = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$")
+_ISO_MS = re.compile(
+    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z$"
+)  # wire uses RFC 3339; Pydantic JSON may emit μs digits
 
 
 def test_pipeline_record_execution_proof_sync_ok_path() -> None:
@@ -62,7 +65,7 @@ def test_pipeline_record_execution_proof_sync_ok_path() -> None:
     assert ev["status"] == "ok"
     assert ev["correlationId"] == "req-proof-1"
     assert ev["attributes"] == {"service": "payments", "env": "test", "step": "capture"}
-    assert ev["inputs"] == ["pi_abc"]
+    assert ev["inputs"] == {"args": ["pi_abc"]}
     assert ev["output"] == {"status": "succeeded", "id": "pi_abc"}
 
     assert _ISO_MS.match(ev["startedAt"])
@@ -151,10 +154,10 @@ def test_pipeline_safe_json_envelope_triple_fallback() -> None:
         intent="i",
         action="a",
         inputs={},
-        status="ok",
-        started_at="s",
-        completed_at="c",
-        duration_ms=0,
+        status=Status.ok,
+        started_at="2020-01-01T00:00:00.000Z",
+        completed_at="2020-01-01T00:00:01.000Z",
+        duration_ms=0.0,
     )
 
     def bust(*_a: object, **_k: object) -> str:

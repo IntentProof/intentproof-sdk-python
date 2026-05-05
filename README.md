@@ -342,7 +342,9 @@ Custom **`body`** serializers: if **`body(event)`** raises, **`HttpExporter`** n
 
 Schemas, golden oracles, and the **Vitest conformance oracle** live in the **[IntentProof specification repository (`intentproof-spec`)](https://github.com/intentproof/intentproof-spec)**.
 
-- **CI:** every push/PR runs `scripts/run-conformance.sh` from that repo (see `.github/workflows/ci.yml`).
+- **Version pin:** **`[tool.intentproof].spec-version`** in **`pyproject.toml`** matches **`spec.json`** in that repo; **`scripts/check-sdk-spec-pin.sh`** enforces it before conformance.
+
+- **CI:** every push/PR checks out this SDK plus **`intentproof-spec`** and runs **`scripts/spec-conformance.sh`** (pin check + full oracle; see `.github/workflows/ci.yml`). The **`spec-golden-parity`** job runs **`tests/unit/test_spec_golden_conformance.py`** against the same **`golden/execution_event_cases.jsonl`** using **`jsonschema`** + semantics mirrored from the spec (`tests/spec_semantics.py`).
 - **Local:** clone `intentproof-spec` **next to** this repository (`../intentproof-spec`), then:
 
   ```bash
@@ -350,6 +352,14 @@ Schemas, golden oracles, and the **Vitest conformance oracle** live in the **[In
   ```
 
   Or set `INTENTPROOF_SPEC_ROOT` and run `bash scripts/spec-conformance.sh`.
+
+- **Generated fingerprint metadata:** model generation writes **`src/intentproof/generated/spec_fingerprint.json`** (spec version, generator version, per-schema SHA-256, aggregate hash). Validate/update generated artifacts with:
+
+  ```bash
+  bash scripts/verify-generated-types.sh
+  ```
+
+- **No handwritten model types:** **`scripts/check-no-handwritten-model-types.sh`** delegates to the shared **`intentproof-spec`** checker. It runs in CI (dedicated **`no-handwritten-model-types`** job—SDK + spec checkout and **`python3`** only—and **`tox -e static`**), release publish, and release preflight required checks, and fails if schema model class definitions appear outside **`src/intentproof/generated`** or if the bridge aliases in **`src/intentproof/types.py`** stop mapping to generated models.
 
 ---
 

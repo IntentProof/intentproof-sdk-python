@@ -28,7 +28,7 @@ from intentproof.sdk import (
     _to_error_snapshot,
     merge_attrs,
 )
-from intentproof.types import UNDEFINED, ExecutionEvent
+from intentproof.types import UNDEFINED, ExecutionEvent, Status
 from intentproof.validation import assert_wrap_options_shape
 
 
@@ -40,7 +40,7 @@ def test_merge_attrs_and_error_snapshot() -> None:
     assert merge_attrs({"a": 1}, None) == {"a": 1}
     assert merge_attrs({}, {}) is None
     snap = _to_error_snapshot(CE("x"), True)
-    assert snap["name"] == "Error" and "stack" not in snap
+    assert snap.name == "Error" and snap.stack is None
 
 
 def test_default_on_exporter_error_logs(caplog: pytest.LogCaptureFixture) -> None:
@@ -50,10 +50,10 @@ def test_default_on_exporter_error_logs(caplog: pytest.LogCaptureFixture) -> Non
         intent="i",
         action="a",
         inputs={},
-        status="ok",
-        started_at="s",
-        completed_at="c",
-        duration_ms=0,
+        status=Status.ok,
+        started_at="2020-01-01T00:00:00.000Z",
+        completed_at="2020-01-01T00:00:01.000Z",
+        duration_ms=0.0,
     )
     _default_on_exporter_error(ValueError("e"), ev)
     assert any("exporter error" in r.message for r in caplog.records)
@@ -138,7 +138,7 @@ def test_capture_fallbacks() -> None:
         raise RuntimeError("n")
 
     c.wrap({"intent": "i", "action": "a", "capture_input": bad_in}, lambda: 1)()
-    assert mem.get_events()[-1]["inputs"] == []
+    assert mem.get_events()[-1]["inputs"] == {"args": []}
 
     mem2 = MemoryExporter()
     c2 = IntentProofClient(IntentProofConfig(exporters=[mem2]))
@@ -207,10 +207,10 @@ def test_maybe_schedule_on_err_raises(caplog: pytest.LogCaptureFixture) -> None:
         intent="i",
         action="a",
         inputs={},
-        status="ok",
-        started_at="s",
-        completed_at="c",
-        duration_ms=0,
+        status=Status.ok,
+        started_at="2020-01-01T00:00:00.000Z",
+        completed_at="2020-01-01T00:00:01.000Z",
+        duration_ms=0.0,
     )
     _maybe_schedule_awaitable(bad(), on_err, ev)
     for _ in range(200):
