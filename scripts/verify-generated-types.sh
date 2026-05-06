@@ -3,6 +3,7 @@
 set -euo pipefail
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo"
+python -m pip install -e ".[dev]"
 python3 scripts/generate_schema_models.py
 ruff format src/intentproof/generated
 git diff --exit-code -- src/intentproof/generated
