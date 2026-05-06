@@ -6,12 +6,27 @@ All notable changes to this repository are documented here. **PyPI** releases us
 
 ## Unreleased
 
-- **Spec-generated wire models:** Add `src/intentproof/generated` (Pydantic models from intentproof-spec JSON Schemas, embedded normative schema dicts for `jsonschema`, and `spec_fingerprint.json` with spec version plus per-schema and aggregate SHA-256). Route SDK types and wire serialization through these models; add `schema_validate` helpers for execution events, wrap options, and runtime config and export them from `intentproof`.
-- **Codegen and drift guards:** Add `scripts/generate_schema_models.py` with pinned `datamodel-code-generator` and deterministic generation; add `scripts/verify-generated-types.sh`, `scripts/check-no-bundled-schema.sh`, and `scripts/check-sdk-spec-pin.sh` enforcing `[tool.intentproof]` `spec-version` and `spec-commit` against the spec checkout.
-- **No handwritten schema models:** `scripts/check-no-handwritten-model-types.sh` delegates to `intentproof-spec`’s shared checker (requires a spec checkout via `INTENTPROOF_SPEC_ROOT`, sibling `../intentproof-spec`, or `./intentproof-spec`). Wired into **`tox -e static`**, a dedicated CI job (`no-handwritten-model-types`) that checks out the pinned spec revision without installing the SDK, the Release workflow before build, and release preflight required check-runs.
-- **CI and release:** Checkout intentproof-spec at **`pyproject.toml`** `spec-commit` across conformance and policy jobs; add **`hardening`** and **`spec-golden-parity`**; upload conformance report artifact **`conformance-report-python`**; run conformance with replay/metadata env vars; extend **push** triggers to **`master`**; release preflight requires **`no-handwritten-model-types`**, **`hardening`**, **`intentproof-spec`**, **`spec-golden-parity`**, and **`tox`** static/cov matrix successes.
-- **Conformance wrapper:** `scripts/spec-conformance.sh` gains spec-pin integration, standardized SDK report metadata (`INTENTPROOF_SDK_NAME`, `INTENTPROOF_SDK_LANGUAGE`, `INTENTPROOF_SDK_VERSION`), and clearer resolution when the spec checkout path is not set.
-- **Tests and docs:** Add golden JSONL conformance, spec semantics mirroring, fingerprint validation, schema validation tests, and updates to SDK/exporter/wire tests; refresh **`README.md`** and **`tox.ini`** for the spec-first workflow.
+- None yet.
+
+## 0.1.2 — 2026-05-06
+
+- **Generated model authority:** shift wire-model ownership to
+  `src/intentproof/generated` from `intentproof-spec` schemas (embedded
+  normative schema dicts, fingerprint artifact, and schema validation helpers
+  exported from `intentproof`).
+- **Codegen/drift hardening:** add deterministic model generation and enforce
+  drift policy (`generate_schema_models.py`, `verify-generated-types.sh`,
+  `check-no-bundled-schema.sh`, `check-sdk-spec-pin.sh`, delegated
+  `check-no-handwritten-model-types.sh`).
+- **CI/release hardening:** pin spec checkout by declared `spec-commit`; add
+  hardening and spec-golden-parity jobs; require no-handwritten-model checks in
+  release preflight; publish conformance report artifacts with standardized SDK
+  metadata.
+- **Parity bootstrap fix:** install dev dependencies in
+  `scripts/verify-generated-types.sh` so generated-type checks resolve
+  `datamodel-code-generator` metadata in clean runners.
+- **Tests/docs updates:** expand conformance and schema-validation coverage;
+  update README/tox workflow docs for spec-first development.
 
 ## 0.1.1 — 2026-05-04
 

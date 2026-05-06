@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "intentproof-sdk"
-version = "0.1.1"
+version = "0.1.2"
 description = "IntentProof: verifiable execution records—intent, action, and proof for every wrapped call."
 readme = "README.md"
 license = "Apache-2.0"
