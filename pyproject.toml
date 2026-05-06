@@ -47,7 +47,7 @@ dev = [
 [tool.intentproof]
 # Must match vendored intentproof-spec spec.json + git HEAD — enforced by scripts/check-sdk-spec-pin.sh
 spec-version = "spec-v1.0.0"
-spec-commit = "c712a84f6bea82bd57448175e648cf4ba492d844"
+spec-commit = "8417426f5927a4d8e3437e046c172dc15eceeb33"
 
 [project.urls]
 Homepage = "https://github.com/IntentProof/intentproof-sdk-python"
