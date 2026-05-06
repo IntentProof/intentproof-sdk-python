@@ -2,11 +2,11 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, master]
   pull_request:
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -16,9 +16,24 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Resolve pinned intentproof-spec revision
+        id: spec_pin
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          import tomllib
+          from pathlib import Path
+          c = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["tool"]["intentproof"]["spec-commit"]
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write(f"sha={c}\n")
+          PY
+
       - uses: actions/checkout@v6
         with:
           repository: IntentProof/intentproof-spec
+          ref: ${{ steps.spec_pin.outputs.sha }}
+          fetch-depth: 0
           path: intentproof-spec
 
       - name: No handwritten model/types outside generated schema package
@@ -32,9 +47,24 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Resolve pinned intentproof-spec revision
+        id: spec_pin
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          import tomllib
+          from pathlib import Path
+          c = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["tool"]["intentproof"]["spec-commit"]
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write(f"sha={c}\n")
+          PY
+
       - uses: actions/checkout@v6
         with:
           repository: IntentProof/intentproof-spec
+          ref: ${{ steps.spec_pin.outputs.sha }}
+          fetch-depth: 0
           path: intentproof-spec
 
       - uses: actions/setup-node@v6
@@ -52,9 +82,24 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Resolve pinned intentproof-spec revision
+        id: spec_pin
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          import tomllib
+          from pathlib import Path
+          c = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["tool"]["intentproof"]["spec-commit"]
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write(f"sha={c}\n")
+          PY
+
       - uses: actions/checkout@v6
         with:
           repository: IntentProof/intentproof-spec
+          ref: ${{ steps.spec_pin.outputs.sha }}
+          fetch-depth: 0
           path: intentproof-spec
 
       - uses: actions/setup-node@v6
@@ -72,7 +117,7 @@ jobs:
         run: bash scripts/spec-conformance.sh
 
       - name: Upload conformance report artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: conformance-report-python
           path: intentproof-spec/conformance-report.json
@@ -84,9 +129,24 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Resolve pinned intentproof-spec revision
+        id: spec_pin
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          import tomllib
+          from pathlib import Path
+          c = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["tool"]["intentproof"]["spec-commit"]
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write(f"sha={c}\n")
+          PY
+
       - uses: actions/checkout@v6
         with:
           repository: IntentProof/intentproof-spec
+          ref: ${{ steps.spec_pin.outputs.sha }}
+          fetch-depth: 0
           path: intentproof-spec
 
       - uses: ./.github/actions/setup-python-pip
@@ -145,9 +205,24 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Resolve pinned intentproof-spec revision
+        id: spec_pin
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          import tomllib
+          from pathlib import Path
+          c = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["tool"]["intentproof"]["spec-commit"]
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write(f"sha={c}\n")
+          PY
+
       - uses: actions/checkout@v6
         with:
           repository: IntentProof/intentproof-spec
+          ref: ${{ steps.spec_pin.outputs.sha }}
+          fetch-depth: 0
           path: intentproof-spec
 
       - uses: ./.github/actions/setup-python-pip
