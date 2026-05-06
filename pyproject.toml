@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "intentproof-sdk"
-version = "0.1.1"
+version = "0.1.2"
 description = "IntentProof: verifiable execution records—intent, action, and proof for every wrapped call."
 readme = "README.md"
 license = "Apache-2.0"
@@ -46,8 +46,8 @@ dev = [
 
 [tool.intentproof]
 # Must match vendored intentproof-spec spec.json + git HEAD — enforced by scripts/check-sdk-spec-pin.sh
-spec-version = "spec-v1.0.0"
-spec-commit = "8417426f5927a4d8e3437e046c172dc15eceeb33"
+spec-version = "spec-v1.0.1"
+spec-commit = "74ea3a23ea80dbe6549338d0612b543a26ebbaf1"
 
 [project.urls]
 Homepage = "https://github.com/IntentProof/intentproof-sdk-python"
