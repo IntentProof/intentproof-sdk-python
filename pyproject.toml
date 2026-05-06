@@ -45,13 +45,14 @@ dev = [
 ]
 
 [tool.intentproof]
-# Must match https://github.com/intentproof/intentproof-spec/blob/main/spec.json — enforced by scripts/check-sdk-spec-pin.sh
+# Must match vendored intentproof-spec spec.json + git HEAD — enforced by scripts/check-sdk-spec-pin.sh
 spec-version = "spec-v1.0.0"
+spec-commit = "c712a84f6bea82bd57448175e648cf4ba492d844"
 
 [project.urls]
-Homepage = "https://github.com/intentproof/intentproof-sdk-python"
-Repository = "https://github.com/intentproof/intentproof-sdk-python"
-Issues = "https://github.com/intentproof/intentproof-sdk-python/issues"
+Homepage = "https://github.com/IntentProof/intentproof-sdk-python"
+Repository = "https://github.com/IntentProof/intentproof-sdk-python"
+Issues = "https://github.com/IntentProof/intentproof-sdk-python/issues"
 
 # --- Hatchling (wheel & sdist) -------------------------------------------------
 

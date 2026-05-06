@@ -44,7 +44,7 @@ Ordinary telemetry shows that *something ran*. It rarely ships an **auditable st
 **Package:** `intentproof-sdk` (PyPI).
 
 - [PyPI — `intentproof-sdk`](https://pypi.org/project/intentproof-sdk/)
-- [GitHub Releases — IntentProof Python SDK](https://github.com/intentproof/intentproof-sdk-python/releases)
+- [GitHub Releases — IntentProof Python SDK](https://github.com/IntentProof/intentproof-sdk-python/releases)
 
 Pin the **version** you want from PyPI or from GitHub Releases. Replace **`x.y.z`** below with that version.
 
@@ -323,7 +323,7 @@ run_probe()
 
 ## Security
 
-For **vulnerability reporting**, use this repository’s [**Security**](https://github.com/intentproof/intentproof-sdk-python/security) tab (private advisories).
+For **vulnerability reporting**, use this repository’s [**Security**](https://github.com/IntentProof/intentproof-sdk-python/security) tab (private advisories).
 
 Every **`ExecutionEvent`** you emit is data you may ship off-process. Treat them like audit-grade execution records: they can include PII, secrets, stack traces, and business identifiers depending on your **`snapshot`** / **`capture_*`** hooks.
 
@@ -340,9 +340,11 @@ Custom **`body`** serializers: if **`body(event)`** raises, **`HttpExporter`** n
 
 ## Canonical specification (`intentproof-spec`)
 
-Schemas, golden oracles, and the **Vitest conformance oracle** live in the **[IntentProof specification repository (`intentproof-spec`)](https://github.com/intentproof/intentproof-spec)**.
+**Shared pins and terminology** (`INTENTPROOF_SPEC_ROOT`, **`spec-commit`**, script names): **[`intentproof-spec` CONTRIBUTING — Terminology](https://github.com/IntentProof/intentproof-spec/blob/main/CONTRIBUTING.md#terminology-shared-with-sdk-repos)**.
 
-- **Version pin:** **`[tool.intentproof].spec-version`** in **`pyproject.toml`** matches **`spec.json`** in that repo; **`scripts/check-sdk-spec-pin.sh`** enforces it before conformance.
+Schemas, golden oracles, and the **Vitest conformance oracle** live in the **[IntentProof specification repository (`intentproof-spec`)](https://github.com/IntentProof/intentproof-spec)**.
+
+- **Version pin:** **`[tool.intentproof].spec-version`** and **`spec-commit`** in **`pyproject.toml`** match **`spec.json`** and the spec **`HEAD`** checkout; **`scripts/check-sdk-spec-pin.sh`** enforces this before conformance.
 
 - **CI:** every push/PR checks out this SDK plus **`intentproof-spec`** and runs **`scripts/spec-conformance.sh`** (pin check + full oracle; see `.github/workflows/ci.yml`). The **`spec-golden-parity`** job runs **`tests/unit/test_spec_golden_conformance.py`** against the same **`golden/execution_event_cases.jsonl`** using **`jsonschema`** + semantics mirrored from the spec (`tests/spec_semantics.py`).
 - **Local:** clone `intentproof-spec` **next to** this repository (`../intentproof-spec`), then:
@@ -364,6 +366,8 @@ Schemas, golden oracles, and the **Vitest conformance oracle** live in the **[In
 ---
 
 ## Project development
+
+Contributing and shared **`intentproof-spec`** terminology: **[`CONTRIBUTING.md`](CONTRIBUTING.md)**.
 
 Layout: **`src/`** tree, built with **Hatchling** ([Hatch](https://github.com/pypa/hatch); **`build-backend = "hatchling.build"`** in `pyproject.toml`). Requires **Python** 3.11 or newer. Release history: [`CHANGELOG.md`](CHANGELOG.md).
 
