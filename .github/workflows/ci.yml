@@ -135,21 +135,20 @@ jobs:
           path: intentproof-spec/conformance-certificate.json
           if-no-files-found: error
 
-      - name: Publish latest conformance artifacts into repo
+      - name: Publish conformance certificate and report at repo root
         if: ${{ github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'master') && github.actor != 'github-actions[bot]' }}
         run: |
           set -euo pipefail
-          mkdir -p artifacts
-          cp intentproof-spec/conformance-certificate.json artifacts/conformance-certificate.latest.json
-          cp intentproof-spec/conformance-report.json artifacts/conformance-report.latest.json
-          if git diff --quiet -- artifacts/conformance-certificate.latest.json artifacts/conformance-report.latest.json; then
+          cp intentproof-spec/conformance-certificate.json conformance-certificate.json
+          cp intentproof-spec/conformance-report.json conformance-report.json
+          if git diff --quiet -- conformance-certificate.json conformance-report.json; then
             echo "No conformance artifact updates to commit."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add artifacts/conformance-certificate.latest.json artifacts/conformance-report.latest.json
-          git commit -m "chore(ci): update latest conformance artifacts"
+          git add conformance-certificate.json conformance-report.json
+          git commit -m "chore(ci): update conformance certificate and report"
           git push
 
   spec-golden-parity:
