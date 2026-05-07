@@ -8,11 +8,11 @@ Generate Pydantic models + embedded normative JSON Schemas from intentproof-spec
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import subprocess
 import sys
-import hashlib
 from importlib import metadata
 from pathlib import Path
 
@@ -82,11 +82,21 @@ def _patch_config_populate_by_name(py_path: Path) -> None:
     for old, new in (
         (
             "    model_config = ConfigDict(\n        extra='forbid',\n    )",
-            "    model_config = ConfigDict(\n        extra='forbid',\n        populate_by_name=True,\n    )",
+            (
+                "    model_config = ConfigDict(\n"
+                "        extra='forbid',\n"
+                "        populate_by_name=True,\n"
+                "    )"
+            ),
         ),
         (
             "    model_config = ConfigDict(\n        extra='allow',\n    )",
-            "    model_config = ConfigDict(\n        extra='allow',\n        populate_by_name=True,\n    )",
+            (
+                "    model_config = ConfigDict(\n"
+                "        extra='allow',\n"
+                "        populate_by_name=True,\n"
+                "    )"
+            ),
         ),
     ):
         text = text.replace(old, new)
