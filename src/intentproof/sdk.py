@@ -33,9 +33,12 @@ _client_lock = threading.Lock()
 
 
 def _default_on_exporter_error(error: BaseException, event: ExecutionEvent) -> None:
+    message = str(error)
+    event_id = getattr(event, "id", "<unknown>")
     _log.error(
-        "[intentproof] exporter error",
-        exc_info=(type(error), error, error.__traceback__),
+        "[intentproof] exporter error: %s (event_id=%s)",
+        message,
+        event_id,
     )
 
 
