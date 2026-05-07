@@ -1,5 +1,9 @@
 ## **Logs narrate; IntentProof gives you proof.**
 
+[![CI](https://github.com/IntentProof/intentproof-sdk-python/actions/workflows/ci.yml/badge.svg)](https://github.com/IntentProof/intentproof-sdk-python/actions/workflows/ci.yml)
+[![PyPI version](https://img.shields.io/pypi/v/intentproof-sdk)](https://pypi.org/project/intentproof-sdk/)
+[![GitHub release](https://img.shields.io/github/v/release/IntentProof/intentproof-sdk-python)](https://github.com/IntentProof/intentproof-sdk-python/releases)
+
 **IntentProof** is **auditable execution records** for actions that must be defensible—**intent** tied to what actually ran.
 
 **Wrap** the calls that matter; each invocation emits one **verifiable** **`ExecutionEvent`**, structured so intent and outcome can be **reconciled** with reality—not only observed.
@@ -45,6 +49,7 @@ Ordinary telemetry shows that *something ran*. It rarely ships an **auditable st
 
 - [PyPI — `intentproof-sdk`](https://pypi.org/project/intentproof-sdk/)
 - [GitHub Releases — IntentProof Python SDK](https://github.com/IntentProof/intentproof-sdk-python/releases)
+- [CI artifacts (conformance report + certificate)](https://github.com/IntentProof/intentproof-sdk-python/actions/workflows/ci.yml)
 
 Pin the **version** you want from PyPI or from GitHub Releases. Replace **`x.y.z`** below with that version.
 
@@ -347,6 +352,7 @@ Schemas, golden oracles, and the **Vitest conformance oracle** live in the **[In
 - **Version pin:** **`[tool.intentproof].spec-version`** and **`spec-commit`** in **`pyproject.toml`** match **`spec.json`** and the spec **`HEAD`** checkout; **`scripts/check-sdk-spec-pin.sh`** enforces this before conformance.
 
 - **CI:** every push/PR checks out this SDK plus **`intentproof-spec`** and runs **`scripts/spec-conformance.sh`** (pin check + full oracle; see `.github/workflows/ci.yml`). The **`spec-golden-parity`** job runs **`tests/unit/test_spec_golden_conformance.py`** against the same **`golden/execution_event_cases.jsonl`** using **`jsonschema`** + semantics mirrored from the spec (`tests/spec_semantics.py`).
+- **Conformance certificate artifact:** the **`intentproof-spec`** job uploads **`conformance-certificate-python`** (plus **`conformance-report-python`**) in each CI run so certificates are directly visible from the workflow run page.
 - **Local:** clone `intentproof-spec` **next to** this repository (`../intentproof-spec`), then:
 
   ```bash

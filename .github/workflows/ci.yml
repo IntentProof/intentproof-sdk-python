@@ -125,6 +125,13 @@ jobs:
           path: intentproof-spec/conformance-report.json
           if-no-files-found: error
 
+      - name: Upload conformance certificate artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: conformance-certificate-python
+          path: intentproof-spec/conformance-certificate.json
+          if-no-files-found: error
+
   spec-golden-parity:
     runs-on: ubuntu-latest
     timeout-minutes: 10

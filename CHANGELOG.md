@@ -6,7 +6,11 @@ All notable changes to this repository are documented here. **PyPI** releases us
 
 ## Unreleased
 
-- None yet.
+- **CI artifacts:** upload conformance certificate artifacts
+  (`conformance-certificate-python`) alongside conformance reports so
+  attestation outputs are directly visible from workflow runs.
+- **README visibility:** add CI/package/release badges and document where to
+  find conformance report/certificate artifacts in CI.
 
 ## 0.1.2 — 2026-05-06
 
