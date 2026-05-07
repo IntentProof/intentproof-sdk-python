@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/IntentProof/intentproof-sdk-python/actions/workflows/ci.yml/badge.svg)](https://github.com/IntentProof/intentproof-sdk-python/actions/workflows/ci.yml)
 [![PyPI version](https://img.shields.io/pypi/v/intentproof-sdk)](https://pypi.org/project/intentproof-sdk/)
+<a href="https://github.com/IntentProof/intentproof-sdk-python/raw/main/conformance-certificate.json" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/conformance_certificate-view-0366d6" alt="Conformance Certificate" /></a>
 
 **IntentProof** is **auditable execution records** for actions that must be defensible—**intent** tied to what actually ran.
 
@@ -44,14 +45,9 @@ Ordinary telemetry shows that *something ran*. It rarely ships an **auditable st
 
 ## Install
 
-**Package:** `intentproof-sdk` (PyPI).
+**Package:** `intentproof-sdk`.
 
-- [PyPI — `intentproof-sdk`](https://pypi.org/project/intentproof-sdk/)
-- [GitHub Releases — IntentProof Python SDK](https://github.com/IntentProof/intentproof-sdk-python/releases)
-- [Latest conformance certificate (repo file)](./artifacts/conformance-certificate.latest.json)
-- [Latest conformance report (repo file)](./artifacts/conformance-report.latest.json)
-
-Pin the **version** you want from PyPI or from GitHub Releases. Replace **`x.y.z`** below with that version.
+Replace **`x.y.z`** with the package version you intend to pin.
 
 ```bash
 pip install intentproof-sdk==x.y.z
@@ -307,7 +303,7 @@ except RuntimeError:
 
 ### 3 — Proof delivery over HTTP (same **`ExecutionEvent`** shape)
 
-**`HttpExporter`** POSTs the same **`ExecutionEvent`** your verifiers see in memory—here alongside **`MemoryExporter`** so tests can assert the wire without a real collector. The request omits ambient credentials; the body is **`{ "intentproof": "1", "event": … }`** (see exporter implementation). For authenticated collectors, pass **`headers`** (e.g. **`Authorization`**, API keys) — see [Security](#security).
+**`HttpExporter`** POSTs the same **`ExecutionEvent`** your verifiers see in memory—here alongside **`MemoryExporter`** so tests can assert the wire without a real collector. The request omits ambient credentials; the body is **`{ "intentproof": "1", "event": … }`** (see exporter implementation). For authenticated collectors, pass **`headers`** (e.g. **`Authorization`**, API keys) — see the Security section above.
 
 ```python
 run_probe = client.wrap(intent="HTTP test", action="test.http", fn=lambda: 42)
@@ -328,7 +324,7 @@ run_probe()
 
 ## Security
 
-For **vulnerability reporting**, use this repository’s [**Security**](https://github.com/IntentProof/intentproof-sdk-python/security) tab (private advisories).
+For **vulnerability reporting**, use this repository’s Security tab (private advisories).
 
 Every **`ExecutionEvent`** you emit is data you may ship off-process. Treat them like audit-grade execution records: they can include PII, secrets, stack traces, and business identifiers depending on your **`snapshot`** / **`capture_*`** hooks.
 
@@ -345,14 +341,14 @@ Custom **`body`** serializers: if **`body(event)`** raises, **`HttpExporter`** n
 
 ## Canonical specification (`intentproof-spec`)
 
-**Shared pins and terminology** (`INTENTPROOF_SPEC_ROOT`, **`spec-commit`**, script names): **[`intentproof-spec` CONTRIBUTING — Terminology](https://github.com/IntentProof/intentproof-spec/blob/main/CONTRIBUTING.md#terminology-shared-with-sdk-repos)**.
+**Shared pins and terminology** (`INTENTPROOF_SPEC_ROOT`, **`spec-commit`**, script names) are documented in the **`intentproof-spec`** repository (`CONTRIBUTING.md`, Terminology).
 
-Schemas, golden oracles, and the **Vitest conformance oracle** live in the **[IntentProof specification repository (`intentproof-spec`)](https://github.com/IntentProof/intentproof-spec)**.
+Schemas, golden oracles, and the **Vitest conformance oracle** live in the **`intentproof-spec`** repository.
 
 - **Version pin:** **`[tool.intentproof].spec-version`** and **`spec-commit`** in **`pyproject.toml`** match **`spec.json`** and the spec **`HEAD`** checkout; **`scripts/check-sdk-spec-pin.sh`** enforces this before conformance.
 
 - **CI:** every push/PR checks out this SDK plus **`intentproof-spec`** and runs **`scripts/spec-conformance.sh`** (pin check + full oracle; see `.github/workflows/ci.yml`). The **`spec-golden-parity`** job runs **`tests/unit/test_spec_golden_conformance.py`** against the same **`golden/execution_event_cases.jsonl`** using **`jsonschema`** + semantics mirrored from the spec (`tests/spec_semantics.py`).
-- **Conformance certificate artifact:** the **`intentproof-spec`** job uploads **`conformance-certificate-python`** (plus **`conformance-report-python`**) in each CI run and publishes latest snapshots into tracked repo files under **`artifacts/`** on trusted pushes.
+- **Conformance certificate and report:** CI uploads workflow artifacts for each run and, on trusted pushes to the default branch, commits **`conformance-certificate.json`** and **`conformance-report.json`** at this repository root so they stay inspectable on every revision (including before and after spec adoption bumps).
 - **Local:** clone `intentproof-spec` **next to** this repository (`../intentproof-spec`), then:
 
   ```bash
@@ -373,11 +369,11 @@ Schemas, golden oracles, and the **Vitest conformance oracle** live in the **[In
 
 ## Project development
 
-Contributing and shared **`intentproof-spec`** terminology: **[`CONTRIBUTING.md`](CONTRIBUTING.md)**.
+Contributing and shared **`intentproof-spec`** terminology: see **`CONTRIBUTING.md`**.
 
-Layout: **`src/`** tree, built with **Hatchling** ([Hatch](https://github.com/pypa/hatch); **`build-backend = "hatchling.build"`** in `pyproject.toml`). Requires **Python** 3.11 or newer. Release history: [`CHANGELOG.md`](CHANGELOG.md).
+Layout: **`src/`** tree, built with **Hatchling** (PyPA Hatch; **`build-backend = "hatchling.build"`** in `pyproject.toml`). Requires **Python** 3.11 or newer. Release history: **`CHANGELOG.md`**.
 
-Checks run via **[tox](https://tox.wiki/)** (`tox.ini`): **`static`** runs **ruff** (format + lint); **`cov`** runs **pytest** with **pytest-cov** and enforces **100%** line coverage; **`py311`** … **`py314`** install the package with **`dev`** extras and run **pytest**. CI matches this.
+Checks run via **tox** (`tox.ini`): **`static`** runs **ruff** (format + lint); **`cov`** runs **pytest** with **pytest-cov** and enforces **100%** line coverage; **`py311`** … **`py314`** install the package with **`dev`** extras and run **pytest**. CI matches this.
 
 ```bash
 pip install "tox>=4"          # or: pipx install tox
@@ -388,10 +384,10 @@ tox run -e ALL                # static + every Python on PATH (missing interpret
 python -m build               # optional wheel/sdist — uses dev extra: pip install -e ".[dev]"
 ```
 
-**Supply chain:** Runtime **`dependencies`** are empty; **`pip-audit`** checks **dev** tooling (and future runtime deps). Run **`pip-audit`** after **`pip install -e ".[dev]"`**, or **`tox run -e audit`**. On **GitHub**, **Dependabot** (`.github/dependabot.yml`) proposes weekly updates for **`pyproject.toml`** and **GitHub Actions**.
+**Supply chain:** Runtime **`dependencies`** are empty; **`pip-audit`** checks **dev** tooling (and future runtime deps). Run **`pip-audit`** after **`pip install -e ".[dev]"`**, or **`tox run -e audit`**. **Dependabot** (`.github/dependabot.yml`) proposes weekly updates for **`pyproject.toml`** and **GitHub Actions**.
 
 For editor/tooling against an editable install (optional): **`pip install -e ".[dev]"`** in whatever environment your IDE uses.
 
 ## License
 
-Apache-2.0 (see `LICENSE` at the repository root and in the published **PyPI** package when released).
+Apache-2.0 (see **`LICENSE`** at the repository root).
