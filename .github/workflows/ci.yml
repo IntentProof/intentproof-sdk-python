@@ -3,6 +3,11 @@ name: CI
 on:
   push:
     branches: [main, master]
+    # Cert-bot follow-up commits only touch these files; skip full CI so `main` does not
+    # churn behind open PRs (and avoid re-entering publish when actor guards drift).
+    paths-ignore:
+      - "conformance-certificate.json"
+      - "conformance-report.json"
   pull_request:
 
 concurrency:
