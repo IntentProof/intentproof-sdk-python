@@ -84,6 +84,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Resolve pinned intentproof-spec revision
         id: spec_pin
@@ -157,6 +159,7 @@ jobs:
           fi
           git config user.name "intentproof-cert-bot[bot]"
           git config user.email "intentproof-cert-bot[bot]@users.noreply.github.com"
+          git config --local --unset-all http.https://github.com/.extraheader || true
           git remote set-url origin "https://x-access-token:${INTENTPROOF_CERT_BOT_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git add conformance-certificate.json conformance-report.json
           git commit -m "chore(ci): update conformance certificate and report"
