@@ -10,11 +10,15 @@ All notable changes to this repository are documented here. **PyPI** releases us
 
 ## 0.1.3 — 2026-05-08
 
-- **Conformance CI hardening:** keep canonical spec checks green when protected
-  branches reject workflow push-back, while continuing to upload conformance
-  report and certificate artifacts.
-- **Spec pin adoption + docs:** pin to `spec-v2.0.1` and refresh README
-  guidance for artifact visibility and spec-pinned conformance execution.
+- **Conformance pipeline hardening:** pin to `spec-v2.0.1`, keep canonical
+  spec checks green when protected branches reject push-back, and continue
+  uploading conformance report/certificate artifacts for each run.
+- **Cert-bot loop prevention:** skip conformance publish follow-up when the
+  cert bot is the actor and ignore conformance-only root JSON pushes on
+  `main`/`master` to prevent repeated CI churn.
+- **CI/documentation cleanup:** tighten workflow token permissions, simplify
+  publish gating conditions, and refresh README conformance guidance to match
+  current spec-pinned behavior.
 - **Tooling polish:** normalize formatting in schema-model generation tooling to
   keep static checks and generated diffs stable.
 
