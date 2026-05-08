@@ -343,12 +343,12 @@ Custom **`body`** serializers: if **`body(event)`** raises, **`HttpExporter`** n
 
 **Shared pins and terminology** (`INTENTPROOF_SPEC_ROOT`, **`spec-commit`**, script names) are documented in the **`intentproof-spec`** repository (`CONTRIBUTING.md`, Terminology).
 
-Schemas, golden oracles, and the **Vitest conformance oracle** live in the **`intentproof-spec`** repository.
+**`intentproof-spec`** holds normative schemas, golden **`execution_event_cases.jsonl`**, and the canonical **`spec-conformance.sh`** toolchain.
 
 - **Version pin:** **`[tool.intentproof].spec-version`** and **`spec-commit`** in **`pyproject.toml`** match **`spec.json`** and the spec **`HEAD`** checkout; **`scripts/check-sdk-spec-pin.sh`** enforces this before conformance.
 
 - **CI:** every push/PR checks out this SDK plus **`intentproof-spec`** and runs **`scripts/spec-conformance.sh`** (pin check + full oracle; see `.github/workflows/ci.yml`). The **`spec-golden-parity`** job runs **`tests/unit/test_spec_golden_conformance.py`** against the same **`golden/execution_event_cases.jsonl`** using **`jsonschema`** + semantics mirrored from the spec (`tests/spec_semantics.py`).
-- **Conformance certificate and report:** CI uploads workflow artifacts for each run and, on trusted pushes to the default branch, commits **`conformance-certificate.json`** and **`conformance-report.json`** at this repository root so they stay inspectable on every revision (including before and after spec adoption bumps).
+- **Repo-root certificates:** each run uploads **`conformance-report.json`** and **`conformance-certificate.json`** as workflow artifacts; after a green default-branch push, the conformance GitHub App commits the same files at the repo root when they differ from **`main`**.
 - **Local:** clone `intentproof-spec` **next to** this repository (`../intentproof-spec`), then:
 
   ```bash
