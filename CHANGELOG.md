@@ -6,11 +6,17 @@ All notable changes to this repository are documented here. **PyPI** releases us
 
 ## Unreleased
 
-- **CI artifacts:** upload conformance certificate artifacts
-  (`conformance-certificate-python`) alongside conformance reports so
-  attestation outputs are directly visible from workflow runs.
-- **README visibility:** add CI/package/release badges and document where to
-  find conformance report/certificate artifacts in CI.
+- None yet.
+
+## 0.1.3 — 2026-05-08
+
+- **Conformance CI hardening:** keep canonical spec checks green when protected
+  branches reject workflow push-back, while continuing to upload conformance
+  report and certificate artifacts.
+- **Spec pin adoption + docs:** pin to `spec-v2.0.1` and refresh README
+  guidance for artifact visibility and spec-pinned conformance execution.
+- **Tooling polish:** normalize formatting in schema-model generation tooling to
+  keep static checks and generated diffs stable.
 
 ## 0.1.2 — 2026-05-06
 
