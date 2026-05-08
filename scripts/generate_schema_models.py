@@ -6,6 +6,7 @@ Generate Pydantic models + embedded normative JSON Schemas from intentproof-spec
 - ``output`` uses schema ``true`` (any JSON) for Pydantic ergonomics (matches relaxed JSON value).
 - Does not write *.schema.json into the SDK tree.
 """
+
 from __future__ import annotations
 
 import hashlib
