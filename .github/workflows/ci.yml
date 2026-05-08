@@ -3,8 +3,7 @@ name: CI
 on:
   push:
     branches: [main, master]
-    # Cert-bot follow-up commits only touch these files; skip full CI so `main` does not
-    # churn behind open PRs (and avoid re-entering publish when actor guards drift).
+    # Skip when only repo-root conformance JSON changes (artifact refresh commits).
     paths-ignore:
       - "conformance-certificate.json"
       - "conformance-report.json"
@@ -15,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   no-handwritten-model-types:
@@ -87,6 +86,8 @@ jobs:
   intentproof-spec:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      PUBLISH_CONFORMANCE_ROOT: ${{ github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'master') && github.actor != 'github-actions[bot]' && github.actor != 'intentproof-cert-bot[bot]' }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -144,15 +145,14 @@ jobs:
 
       - name: Mint cert-bot installation token
         id: cert_bot_token
-        # Skip when the cert bot pushed: its commit would re-run conformance and loop (new issuedAt/generatedAt each run).
-        if: ${{ github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'master') && github.actor != 'github-actions[bot]' && github.actor != 'intentproof-cert-bot[bot]' }}
+        if: ${{ env.PUBLISH_CONFORMANCE_ROOT == 'true' }}
         uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ vars.INTENTPROOF_CERT_BOT_ID }}
           private-key: ${{ secrets.INTENTPROOF_CERT_BOT_PRIVATE_KEY }}
 
       - name: Publish conformance certificate and report at repo root
-        if: ${{ github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'master') && github.actor != 'github-actions[bot]' && github.actor != 'intentproof-cert-bot[bot]' }}
+        if: ${{ env.PUBLISH_CONFORMANCE_ROOT == 'true' }}
         env:
           INTENTPROOF_CERT_BOT_TOKEN: ${{ steps.cert_bot_token.outputs.token }}
         run: |
