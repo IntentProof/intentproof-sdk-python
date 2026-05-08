@@ -1,7 +1,7 @@
 {
   "certificateVersion": "cert-v0.1.0",
   "issuer": "intentproof-ci",
-  "issuedAt": "2026-05-08T04:20:29.529Z",
+  "issuedAt": "2026-05-08T04:21:23.949Z",
   "subject": {
     "name": "intentproof-sdk-python",
     "language": "python",
@@ -12,7 +12,7 @@
     "specFingerprint": "efaf4db5b5545d9f037d4ce7d2208a7aed7062e9ac417b3fa79ec2adc8bef165",
     "specCommit": "40d3d0b96ded3c86030f3606a0cd0e477f88895c"
   },
-  "conformanceReportDigest": "47d04a25613f1849d0c5147173fc52bd53be8fe73c4b7ce78a9bcf379ca5a049",
+  "conformanceReportDigest": "61b1058251e8566dee15f63b40dc500f95ec8386306634a8b8ea081d484a25e0",
   "claims": {
     "oracle": "intentproof-spec/run-conformance",
     "allPhasesPass": true
