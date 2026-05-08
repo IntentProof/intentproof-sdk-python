@@ -139,14 +139,15 @@ jobs:
 
       - name: Mint cert-bot installation token
         id: cert_bot_token
-        if: ${{ github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'master') && github.actor != 'github-actions[bot]' }}
+        # Skip when the cert bot pushed: its commit would re-run conformance and loop (new issuedAt/generatedAt each run).
+        if: ${{ github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'master') && github.actor != 'github-actions[bot]' && github.actor != 'intentproof-cert-bot[bot]' }}
         uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ vars.INTENTPROOF_CERT_BOT_ID }}
           private-key: ${{ secrets.INTENTPROOF_CERT_BOT_PRIVATE_KEY }}
 
       - name: Publish conformance certificate and report at repo root
-        if: ${{ github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'master') && github.actor != 'github-actions[bot]' }}
+        if: ${{ github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'master') && github.actor != 'github-actions[bot]' && github.actor != 'intentproof-cert-bot[bot]' }}
         env:
           INTENTPROOF_CERT_BOT_TOKEN: ${{ steps.cert_bot_token.outputs.token }}
         run: |
