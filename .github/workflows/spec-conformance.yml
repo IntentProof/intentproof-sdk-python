@@ -1,0 +1,84 @@
+# PR / manual: SDK quality gates + canonical spec oracle (no signing secrets).
+# Trusted signed attestation + repo-root certificate publish lives in conformance-attestation.yml.
+name: Spec Conformance
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spec-conformance-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  spec-conformance:
+    name: Spec conformance + SDK quality gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout SDK repository
+        uses: actions/checkout@v6
+
+      - name: Resolve pinned intentproof-spec revision
+        id: spec_pin
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          import tomllib
+          from pathlib import Path
+          c = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["tool"]["intentproof"]["spec-commit"]
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write(f"sha={c}\n")
+          PY
+
+      - name: Checkout intentproof-spec
+        uses: actions/checkout@v6
+        with:
+          repository: IntentProof/intentproof-spec
+          ref: ${{ steps.spec_pin.outputs.sha }}
+          fetch-depth: 0
+          path: intentproof-spec
+
+      - uses: ./.github/actions/setup-python-pip
+        with:
+          python-version: "3.x"
+          check-latest: true
+
+      - name: Install tox
+        run: pip install "tox>=4"
+
+      - name: SDK quality gates (tox static + cov)
+        env:
+          INTENTPROOF_SPEC_ROOT: ${{ github.workspace }}/intentproof-spec
+        run: tox run -e static,cov
+
+      - name: Set up Node.js for spec oracle
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: intentproof-spec/.nvmrc
+          cache: npm
+          cache-dependency-path: intentproof-spec/package-lock.json
+
+      - name: Run canonical spec conformance
+        env:
+          INTENTPROOF_SPEC_ROOT: ${{ github.workspace }}/intentproof-spec
+          INTENTPROOF_SDK_ID: python
+          INTENTPROOF_REPLAY_VERIFY: "1"
+          INTENTPROOF_CONFORMANCE_JSON: "1"
+          INTENTPROOF_CERTIFICATE_SCHEMA_VERSION: "v2"
+          INTENTPROOF_SPEC_INTEGRITY_PUBLIC_KEY_PATH: ${{ github.workspace }}/intentproof-spec/keys/spec-integrity.public.pem
+        run: |
+          bash scripts/spec-conformance.sh
+          cp intentproof-spec/conformance-report.json conformance-report.json
+
+      - name: Upload conformance report artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: conformance-report-python
+          path: conformance-report.json
+          if-no-files-found: error

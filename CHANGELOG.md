@@ -6,7 +6,7 @@ All notable changes to this repository are documented here. **PyPI** releases us
 
 ## Unreleased
 
-- None yet.
+- **CI / attestation alignment:** split canonical conformance out of **`ci.yml`** into **`spec-conformance.yml`** (PR + manual) and **`conformance-attestation.yml`** (trusted **`main`** signing + validation + root publish), matching **`intentproof-api`** and the Node SDK layout.
 
 ## 0.1.3 — 2026-05-08
 

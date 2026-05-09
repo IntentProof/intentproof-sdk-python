@@ -347,8 +347,9 @@ Custom **`body`** serializers: if **`body(event)`** raises, **`HttpExporter`** n
 
 - **Version pin:** **`[tool.intentproof].spec-version`** and **`spec-commit`** in **`pyproject.toml`** match **`spec.json`** and the spec **`HEAD`** checkout; **`scripts/check-consumer-spec-pin.sh`** delegates to **`intentproof-spec`** **`scripts/check-consumer-spec-pins.sh`** before conformance.
 
-- **CI:** every push/PR checks out this SDK plus **`intentproof-spec`** and runs **`scripts/spec-conformance.sh`** (pin check + full oracle; see `.github/workflows/ci.yml`). The **`spec-golden-parity`** job runs **`tests/unit/test_spec_golden_conformance.py`** against the same **`golden/execution_event_cases.jsonl`** using **`jsonschema`** + semantics mirrored from the spec (`tests/spec_semantics.py`).
-- **Repo-root certificates:** each run uploads **`conformance-report.json`** and **`conformance-certificate.json`** as workflow artifacts; after a green default-branch push, the conformance GitHub App commits the same files at the repo root when they differ from **`main`**.
+- **CI:** `.github/workflows/ci.yml` runs hardening, golden parity, audit, and the **`tox`** matrix against a pinned **`intentproof-spec`** checkout.
+- **Spec conformance (PR):** `.github/workflows/spec-conformance.yml` runs **`tox run -e static,cov`** then **`scripts/spec-conformance.sh`** and uploads **`conformance-report.json`** (committed spec public key path; no signing secrets on PRs). The **`spec-golden-parity`** job in CI runs **`tests/unit/test_spec_golden_conformance.py`** against **`golden/execution_event_cases.jsonl`** using **`jsonschema`** + semantics mirrored from the spec (`tests/spec_semantics.py`).
+- **Trusted attestation (`main`):** `.github/workflows/conformance-attestation.yml` follows **`intentproof-api`**: tox gates, signed oracle output, **`npm run validate:conformance-certificate`** in the spec checkout, **`conformance-artifacts`** upload, and cert-bot publish of root **`conformance-certificate.json`** / **`conformance-report.json`** when they change.
 - **Local:** clone `intentproof-spec` **next to** this repository (`../intentproof-spec`), then:
 
   ```bash
