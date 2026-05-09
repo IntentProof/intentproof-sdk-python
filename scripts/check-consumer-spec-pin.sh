@@ -6,4 +6,9 @@ set -euo pipefail
 spec_root="$(cd "$1" && pwd)"
 sdk_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-exec bash "${spec_root}/scripts/check-consumer-spec-pins.sh" "${sdk_root}" "${spec_root}"
+if [[ -f "${spec_root}/scripts/check-consumer-spec-pins.sh" ]]; then
+  exec bash "${spec_root}/scripts/check-consumer-spec-pins.sh" "${sdk_root}" "${spec_root}"
+fi
+
+# Backward compatibility for older pinned spec commits (pre-consumer script rename).
+exec bash "${spec_root}/scripts/check-sdk-spec-pins.sh" "${sdk_root}" "${spec_root}"
