@@ -6,6 +6,10 @@ name: Conformance Attestation
 on:
   push:
     branches: [main, master]
+    # Do not re-run when cert-bot only refreshes repo-root conformance JSON (avoids push loops).
+    paths-ignore:
+      - "conformance-certificate.json"
+      - "conformance-report.json"
   workflow_dispatch:
 
 permissions:
