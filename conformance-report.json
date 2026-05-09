@@ -1,5 +1,5 @@
 {
-  "specVersion": "spec-v2.0.1",
+  "specVersion": "spec-v2.0.2",
   "specFingerprint": "efaf4db5b5545d9f037d4ce7d2208a7aed7062e9ac417b3fa79ec2adc8bef165",
   "sdk": {
     "name": "intentproof-sdk-python",
@@ -23,5 +23,5 @@
       "stream2": "aee9ba9cebe4c3491ab1f297fdf98bbf1eb1cc3bf4607a4b5d385299aaf08027"
     }
   },
-  "generatedAt": "2026-05-08T05:44:28.349Z"
+  "generatedAt": "2026-05-09T06:23:56.789Z"
 }
