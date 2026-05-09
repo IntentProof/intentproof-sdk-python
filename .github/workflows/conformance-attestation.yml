@@ -1,0 +1,142 @@
+# Trusted-path attestation: signed conformance certificate + validation.
+# Mirrors intentproof-api/.github/workflows/conformance-attestation.yml.
+# PR checks stay on spec-conformance.yml (no signing secrets required).
+name: Conformance Attestation
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: conformance-attestation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  conformance-attestation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PUBLISH_CONFORMANCE_ROOT: ${{ github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'master') && github.actor != 'github-actions[bot]' && github.actor != 'intentproof-cert-bot[bot]' }}
+    steps:
+      - name: Checkout SDK repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Resolve pinned intentproof-spec revision
+        id: spec_pin
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          import tomllib
+          from pathlib import Path
+          c = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["tool"]["intentproof"]["spec-commit"]
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write(f"sha={c}\n")
+          PY
+
+      - name: Checkout intentproof-spec
+        uses: actions/checkout@v6
+        with:
+          repository: IntentProof/intentproof-spec
+          ref: ${{ steps.spec_pin.outputs.sha }}
+          fetch-depth: 0
+          path: intentproof-spec
+
+      - uses: ./.github/actions/setup-python-pip
+        with:
+          python-version: "3.x"
+          check-latest: true
+
+      - name: Install tox
+        run: pip install "tox>=4"
+
+      # secrets context is not allowed in step `if:`; pass PEMs via env and verify in shell.
+      - name: Require attestation secrets
+        env:
+          INTENTPROOF_CERTIFICATE_SIGNING_KEY_PEM: ${{ secrets.INTENTPROOF_CERTIFICATE_SIGNING_KEY_PEM }}
+          INTENTPROOF_CERTIFICATE_PUBLIC_KEY_PEM: ${{ secrets.INTENTPROOF_CERTIFICATE_PUBLIC_KEY_PEM }}
+          INTENTPROOF_SPEC_INTEGRITY_PUBLIC_KEY_PEM: ${{ secrets.INTENTPROOF_SPEC_INTEGRITY_PUBLIC_KEY_PEM }}
+        run: |
+          if [[ -z "${INTENTPROOF_CERTIFICATE_SIGNING_KEY_PEM}" || -z "${INTENTPROOF_CERTIFICATE_PUBLIC_KEY_PEM}" ]]; then
+            echo '::error::Configure repository secrets INTENTPROOF_CERTIFICATE_SIGNING_KEY_PEM and INTENTPROOF_CERTIFICATE_PUBLIC_KEY_PEM.'
+            exit 1
+          fi
+          if [[ -z "${INTENTPROOF_SPEC_INTEGRITY_PUBLIC_KEY_PEM}" ]]; then
+            echo '::error::Configure repository secret INTENTPROOF_SPEC_INTEGRITY_PUBLIC_KEY_PEM (spec integrity verify during oracle).'
+            exit 1
+          fi
+
+      - name: SDK quality gates (tox static + cov)
+        env:
+          INTENTPROOF_SPEC_ROOT: ${{ github.workspace }}/intentproof-spec
+        run: tox run -e static,cov
+
+      - name: Set up Node.js for spec oracle
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: intentproof-spec/.nvmrc
+          cache: npm
+          cache-dependency-path: intentproof-spec/package-lock.json
+
+      - name: Conformance (trusted attestation gate)
+        env:
+          INTENTPROOF_SPEC_ROOT: ${{ github.workspace }}/intentproof-spec
+          INTENTPROOF_SDK_ID: python
+          INTENTPROOF_REPLAY_VERIFY: "1"
+          INTENTPROOF_CONFORMANCE_JSON: "1"
+          INTENTPROOF_CERTIFICATE_SCHEMA_VERSION: "v2"
+          INTENTPROOF_SPEC_INTEGRITY_PUBLIC_KEY_PEM: ${{ secrets.INTENTPROOF_SPEC_INTEGRITY_PUBLIC_KEY_PEM }}
+          INTENTPROOF_CERTIFICATE_SIGNING_KEY_PEM: ${{ secrets.INTENTPROOF_CERTIFICATE_SIGNING_KEY_PEM }}
+          INTENTPROOF_CERTIFICATE_SIGNING_KEY_ID: intentproof-ci-ed25519-v1
+        run: bash scripts/spec-conformance.sh
+
+      - name: Validate conformance certificate
+        working-directory: intentproof-spec
+        env:
+          INTENTPROOF_CERTIFICATE_PUBLIC_KEY_PEM: ${{ secrets.INTENTPROOF_CERTIFICATE_PUBLIC_KEY_PEM }}
+          INTENTPROOF_CERTIFICATE_REQUIRE_SIGNATURE: "1"
+          INTENTPROOF_CERTIFICATE_SCHEMA_VERSION: "v2"
+        run: npm run validate:conformance-certificate
+
+      - name: Upload conformance report and certificate
+        uses: actions/upload-artifact@v7
+        with:
+          name: conformance-artifacts
+          path: |
+            intentproof-spec/conformance-report.json
+            intentproof-spec/conformance-certificate.json
+          if-no-files-found: error
+
+      - name: Mint cert-bot installation token
+        id: cert_bot_token
+        if: ${{ env.PUBLISH_CONFORMANCE_ROOT == 'true' }}
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.INTENTPROOF_CERT_BOT_ID }}
+          private-key: ${{ secrets.INTENTPROOF_CERT_BOT_PRIVATE_KEY }}
+
+      - name: Publish conformance certificate and report at repo root
+        if: ${{ env.PUBLISH_CONFORMANCE_ROOT == 'true' }}
+        env:
+          INTENTPROOF_CERT_BOT_TOKEN: ${{ steps.cert_bot_token.outputs.token }}
+        run: |
+          set -euo pipefail
+          cp intentproof-spec/conformance-certificate.json conformance-certificate.json
+          cp intentproof-spec/conformance-report.json conformance-report.json
+          if git diff --quiet -- conformance-certificate.json conformance-report.json; then
+            echo "No conformance artifact updates to commit."
+            exit 0
+          fi
+          git config user.name "intentproof-cert-bot[bot]"
+          git config user.email "intentproof-cert-bot[bot]@users.noreply.github.com"
+          git config --local --unset-all http.https://github.com/.extraheader || true
+          git remote set-url origin "https://x-access-token:${INTENTPROOF_CERT_BOT_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git add conformance-certificate.json conformance-report.json
+          git commit -m "chore(ci): update conformance certificate and report"
+          git push
