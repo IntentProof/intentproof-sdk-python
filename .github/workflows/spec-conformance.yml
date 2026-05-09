@@ -5,6 +5,10 @@ name: Spec Conformance
 on:
   workflow_dispatch:
   pull_request:
+    # Skip when the PR sync only touches repo-root conformance artifacts (avoids check loops).
+    paths-ignore:
+      - "conformance-certificate.json"
+      - "conformance-report.json"
 
 permissions:
   contents: read
