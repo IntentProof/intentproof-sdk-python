@@ -45,7 +45,7 @@ dev = [
 ]
 
 [tool.intentproof]
-# Must match vendored intentproof-spec spec.json + git HEAD — enforced by scripts/check-sdk-spec-pin.sh
+# Must match vendored intentproof-spec spec.json + git HEAD — enforced by scripts/check-consumer-spec-pin.sh
 spec-version = "spec-v2.0.1"
 spec-commit = "40d3d0b96ded3c86030f3606a0cd0e477f88895c"
 

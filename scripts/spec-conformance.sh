@@ -26,7 +26,7 @@ if [[ -z "$spec_root" || ! -f "${spec_root}/scripts/run-conformance.sh" ]]; then
   exit 1
 fi
 
-bash "${sdk_root}/scripts/check-sdk-spec-pin.sh" "$spec_root"
+bash "${sdk_root}/scripts/check-consumer-spec-pin.sh" "$spec_root"
 
 export INTENTPROOF_SDK_ID="${INTENTPROOF_SDK_ID:-python}"
 export INTENTPROOF_SDK_NAME="${INTENTPROOF_SDK_NAME:-intentproof-sdk-python}"

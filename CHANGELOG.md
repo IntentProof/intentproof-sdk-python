@@ -30,7 +30,7 @@ All notable changes to this repository are documented here. **PyPI** releases us
   exported from `intentproof`).
 - **Codegen/drift hardening:** add deterministic model generation and enforce
   drift policy (`generate_schema_models.py`, `verify-generated-types.sh`,
-  `check-no-bundled-schema.sh`, `check-sdk-spec-pin.sh`, delegated
+  `check-no-bundled-schema.sh`, `check-consumer-spec-pin.sh`, delegated
   `check-no-handwritten-model-types.sh`).
 - **CI/release hardening:** pin spec checkout by declared `spec-commit`; add
   hardening and spec-golden-parity jobs; require no-handwritten-model checks in
