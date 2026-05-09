@@ -81,7 +81,7 @@ jobs:
           cache-dependency-path: intentproof-spec/package-lock.json
 
       - name: SDK hardening contract audit (spec-only + drift guards)
-        run: bash intentproof-spec/scripts/check-sdk-hardening.sh "${{ github.workspace }}"
+        run: bash intentproof-spec/scripts/check-consumer-hardening.sh "${{ github.workspace }}"
 
   intentproof-spec:
     runs-on: ubuntu-latest
