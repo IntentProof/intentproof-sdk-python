@@ -25,7 +25,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Verify required CI checks passed on release SHA
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd  # was `@v8`
         with:
           script: |
             const requiredExact = ["no-handwritten-model-types", "hardening", "intentproof-spec", "spec-golden-parity"];
@@ -70,7 +70,7 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # was `@v6`
 
       - name: Resolve pinned intentproof-spec revision
         id: spec_pin
@@ -85,7 +85,7 @@ jobs:
               f.write(f"sha={c}\n")
           PY
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # was `@v6`
         with:
           repository: IntentProof/intentproof-spec
           ref: ${{ steps.spec_pin.outputs.sha }}
@@ -129,6 +129,6 @@ jobs:
         run: python -m build
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b  # was `release/v1`
         with:
           packages-dir: dist/
