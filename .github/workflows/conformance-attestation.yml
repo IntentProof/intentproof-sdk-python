@@ -133,7 +133,8 @@ jobs:
           set -euo pipefail
           cp intentproof-spec/conformance-certificate.json conformance-certificate.json
           cp intentproof-spec/conformance-report.json conformance-report.json
-          if git diff --quiet -- conformance-certificate.json conformance-report.json; then
+          git add conformance-certificate.json conformance-report.json
+          if git diff --cached --quiet -- conformance-certificate.json conformance-report.json; then
             echo "No conformance artifact updates to commit."
             exit 0
           fi
@@ -141,6 +142,5 @@ jobs:
           git config user.email "intentproof-cert-bot[bot]@users.noreply.github.com"
           git config --local --unset-all http.https://github.com/.extraheader || true
           git remote set-url origin "https://x-access-token:${INTENTPROOF_CERT_BOT_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git add conformance-certificate.json conformance-report.json
-          git commit -m "chore(ci): update conformance certificate and report"
+          git commit -m "chore(ci): update conformance certificate and report" -- conformance-certificate.json conformance-report.json
           git push
