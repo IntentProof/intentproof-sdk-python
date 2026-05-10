@@ -122,29 +122,17 @@ jobs:
           INTENTPROOF_SPEC_ROOT: ${{ github.workspace }}/intentproof-spec
         run: pytest tests/unit/test_spec_golden_conformance.py -v
 
-  audit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # was `@v6`
-
-      - uses: ./.github/actions/setup-python-pip
-        with:
-          python-version: "3.x"
-          check-latest: true
-
-      - name: Install project (dev extras)
-        run: pip install -e ".[dev]"
-
-      - name: pip-audit
-        run: pip-audit
-
   tox:
+    name: tox (${{ matrix.tox-env }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
           - tox-env: static
+            python-version: "3.x"
+            check-latest: true
+          - tox-env: audit
             python-version: "3.x"
             check-latest: true
           - tox-env: cov
