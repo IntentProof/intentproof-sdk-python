@@ -120,7 +120,7 @@ jobs:
       - name: Mint cert-bot installation token
         id: cert_bot_token
         if: ${{ env.PUBLISH_CONFORMANCE_ROOT == 'true' }}
-        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547  # was `@v1`
+        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3  # was `@v1`
         with:
           app-id: ${{ vars.INTENTPROOF_CERT_BOT_ID }}
           private-key: ${{ secrets.INTENTPROOF_CERT_BOT_PRIVATE_KEY }}
