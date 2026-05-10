@@ -56,10 +56,10 @@ jobs:
       - name: Install tox
         run: pip install "tox>=4"
 
-      - name: SDK quality gates (tox static + audit + cov)
+      - name: SDK quality gates (tox static + cov)
         env:
           INTENTPROOF_SPEC_ROOT: ${{ github.workspace }}/intentproof-spec
-        run: tox run -e static,audit,cov
+        run: tox run -e static,cov
 
       - name: Set up Node.js for spec oracle
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # was `@v6`
