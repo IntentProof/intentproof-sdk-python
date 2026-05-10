@@ -25,7 +25,7 @@ jobs:
 
     steps:
       - name: Checkout SDK repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # was `@v6`
 
       - name: Resolve pinned intentproof-spec revision
         id: spec_pin
@@ -41,7 +41,7 @@ jobs:
           PY
 
       - name: Checkout intentproof-spec
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # was `@v6`
         with:
           repository: IntentProof/intentproof-spec
           ref: ${{ steps.spec_pin.outputs.sha }}
@@ -62,7 +62,7 @@ jobs:
         run: tox run -e static,cov
 
       - name: Set up Node.js for spec oracle
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # was `@v6`
         with:
           node-version-file: intentproof-spec/.nvmrc
           cache: npm
@@ -81,7 +81,7 @@ jobs:
           cp intentproof-spec/conformance-report.json conformance-report.json
 
       - name: Upload conformance report artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # was `@v7`
         with:
           name: conformance-report-python
           path: conformance-report.json

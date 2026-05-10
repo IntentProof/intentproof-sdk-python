@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # was `@v6`
 
       - name: Resolve pinned intentproof-spec revision
         id: spec_pin
@@ -36,7 +36,7 @@ jobs:
               f.write(f"sha={c}\n")
           PY
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # was `@v6`
         with:
           repository: IntentProof/intentproof-spec
           ref: ${{ steps.spec_pin.outputs.sha }}
@@ -52,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # was `@v6`
 
       - name: Resolve pinned intentproof-spec revision
         id: spec_pin
@@ -67,14 +67,14 @@ jobs:
               f.write(f"sha={c}\n")
           PY
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # was `@v6`
         with:
           repository: IntentProof/intentproof-spec
           ref: ${{ steps.spec_pin.outputs.sha }}
           fetch-depth: 0
           path: intentproof-spec
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # was `@v6`
         with:
           node-version-file: intentproof-spec/.nvmrc
           cache: npm
@@ -87,7 +87,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # was `@v6`
 
       - name: Resolve pinned intentproof-spec revision
         id: spec_pin
@@ -102,7 +102,7 @@ jobs:
               f.write(f"sha={c}\n")
           PY
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # was `@v6`
         with:
           repository: IntentProof/intentproof-spec
           ref: ${{ steps.spec_pin.outputs.sha }}
@@ -125,7 +125,7 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # was `@v6`
 
       - uses: ./.github/actions/setup-python-pip
         with:
@@ -163,7 +163,7 @@ jobs:
             python-version: "3.14"
             check-latest: false
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # was `@v6`
 
       - name: Resolve pinned intentproof-spec revision
         id: spec_pin
@@ -178,7 +178,7 @@ jobs:
               f.write(f"sha={c}\n")
           PY
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # was `@v6`
         with:
           repository: IntentProof/intentproof-spec
           ref: ${{ steps.spec_pin.outputs.sha }}

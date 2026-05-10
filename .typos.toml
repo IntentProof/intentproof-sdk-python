@@ -1,0 +1,9 @@
+# Typos — https://github.com/crate-ci/typos
+# CI: .github/workflows/typos.yml
+
+[files]
+extend-exclude = ["package-lock.json"]
+
+[default.extend-words]
+# Placeholder Stripe-style IDs; tokenizer can flag “SAMPL” inside “…SAMPLE…”.
+SAMPL = "SAMPL"

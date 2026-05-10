@@ -27,7 +27,7 @@ jobs:
       PUBLISH_CONFORMANCE_ROOT: ${{ github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'master') && github.actor != 'github-actions[bot]' && github.actor != 'intentproof-cert-bot[bot]' }}
     steps:
       - name: Checkout SDK repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # was `@v6`
         with:
           persist-credentials: false
 
@@ -45,7 +45,7 @@ jobs:
           PY
 
       - name: Checkout intentproof-spec
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # was `@v6`
         with:
           repository: IntentProof/intentproof-spec
           ref: ${{ steps.spec_pin.outputs.sha }}
@@ -82,7 +82,7 @@ jobs:
         run: tox run -e static,cov
 
       - name: Set up Node.js for spec oracle
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # was `@v6`
         with:
           node-version-file: intentproof-spec/.nvmrc
           cache: npm
@@ -109,7 +109,7 @@ jobs:
         run: npm run validate:conformance-certificate
 
       - name: Upload conformance report and certificate
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # was `@v7`
         with:
           name: conformance-artifacts
           path: |
@@ -120,7 +120,7 @@ jobs:
       - name: Mint cert-bot installation token
         id: cert_bot_token
         if: ${{ env.PUBLISH_CONFORMANCE_ROOT == 'true' }}
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547  # was `@v1`
         with:
           app-id: ${{ vars.INTENTPROOF_CERT_BOT_ID }}
           private-key: ${{ secrets.INTENTPROOF_CERT_BOT_PRIVATE_KEY }}
