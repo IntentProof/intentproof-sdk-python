@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 import math
-from typing import Any
+from typing import Any, NoReturn
 
 __all__ = ["canonicalize"]
 
@@ -201,12 +201,17 @@ class _NotJSON(Exception):
     pass
 
 
+def _reject_json_constant(c: str) -> NoReturn:
+    """Used as JSONDecoder parse_constant to forbid NaN/Infinity in decoded text."""
+    raise ValueError(f"non-finite number {c}")
+
+
 def _decode_json(s: str) -> Any:
     def _object_pairs_hook(pairs: list[tuple[str, Any]]) -> _CanonObject:
         return _CanonObject(pairs)
 
     decoder = json.JSONDecoder(
-        parse_constant=lambda c: (_ for _ in ()).throw(ValueError(f"non-finite number {c}")),
+        parse_constant=_reject_json_constant,
         object_pairs_hook=_object_pairs_hook,
     )
     stripped = s.lstrip()
