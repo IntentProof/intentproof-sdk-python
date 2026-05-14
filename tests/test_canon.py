@@ -52,6 +52,21 @@ class TestPrimitives(unittest.TestCase):
         self.assertEqual(canonicalize("hello"), '"hello"')
 
 
+class TestLiteralFallbackForTokenPrefixes(unittest.TestCase):
+    """Words that start like JSON literals but are not valid single JSON values."""
+
+    def test_null_false_true_prefixes_decode_as_strings(self):
+        cases = [
+            ("null_pointer", '"null_pointer"'),
+            ("false_alarm", '"false_alarm"'),
+            ("nothing", '"nothing"'),
+            ("true_love", '"true_love"'),
+        ]
+        for inp, expected in cases:
+            with self.subTest(inp=inp):
+                self.assertEqual(canonicalize(inp), expected)
+
+
 class TestStringEscapes(unittest.TestCase):
     def test_minimal_escapes(self):
         cases = [

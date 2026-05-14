@@ -216,7 +216,10 @@ def _decode_json(s: str) -> Any:
         raise _NotJSON from exc
     idx += len(s) - len(stripped)
     if s[idx:].strip():
-        raise ValueError("trailing data after JSON value")
+        # Signal "not a single JSON value" so canonicalize() can fall back to a
+        # literal string when the input is not clearly structured JSON (see
+        # false_alarm / null_pointer vs. '{}x').
+        raise _NotJSON
     return value
 
 
