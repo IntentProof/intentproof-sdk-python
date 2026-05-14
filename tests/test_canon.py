@@ -1,6 +1,5 @@
 """Tests for the RFC 8785 JCS canonicalizer."""
 
-import math
 import os
 import unittest
 
