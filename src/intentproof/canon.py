@@ -127,7 +127,10 @@ def _format_es6(f: float) -> str:
 def _encode_int(i: int) -> str:
     if -(2 ** 53) <= i <= 2 ** 53:
         return str(i)
-    f = float(i)
+    try:
+        f = float(i)
+    except OverflowError as e:
+        raise ValueError(f"out of range integer {i}") from e
     if math.isinf(f):
         raise ValueError(f"out of range integer {i}")
     return _format_es6(f)
@@ -206,10 +209,12 @@ def _decode_json(s: str) -> Any:
         parse_constant=lambda c: (_ for _ in ()).throw(ValueError(f"non-finite number {c}")),
         object_pairs_hook=_object_pairs_hook,
     )
+    stripped = s.lstrip()
     try:
-        value, idx = decoder.raw_decode(s)
+        value, idx = decoder.raw_decode(stripped)
     except json.JSONDecodeError as exc:
         raise _NotJSON from exc
+    idx += len(s) - len(stripped)
     if s[idx:].strip():
         raise ValueError("trailing data after JSON value")
     return value
@@ -230,9 +235,9 @@ def canonicalize(obj: Any) -> str:
         if first in '{"[-tfnNI' or first.isdigit():
             try:
                 tree = _decode_json(obj)
-            except _NotJSON:
+            except _NotJSON as e:
                 if any(ch in stripped for ch in '{}[]:,'):
-                    raise ValueError("invalid JSON")
+                    raise ValueError("invalid JSON") from e
                 return _encode_string(obj)
             return _encode_value(tree)
         return _encode_string(obj)
