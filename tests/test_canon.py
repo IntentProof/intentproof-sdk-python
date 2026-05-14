@@ -215,7 +215,7 @@ class TestPolicyBodyCrossCheck(unittest.TestCase):
             os.path.dirname(__file__), "fixtures", "policy_body_canon.json"
         )
         with open(fixture_path, "r", encoding="utf-8") as f:
-            want = f.read()
+            want = f.read().rstrip("\r\n")
         self.assertEqual(got, want)
 
 
