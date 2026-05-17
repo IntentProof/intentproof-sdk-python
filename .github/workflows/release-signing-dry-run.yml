@@ -16,6 +16,7 @@ on:
 
 jobs:
   build-python-dists:
+    name: "IntentProof Release: Build Python Distributions"
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -60,6 +61,7 @@ jobs:
           path: dist/*
 
   sign-python-dists:
+    name: "IntentProof Release: Sign Python Distributions"
     needs: build-python-dists
     permissions:
       attestations: write

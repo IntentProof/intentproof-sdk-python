@@ -8,6 +8,7 @@ on:
 
 jobs:
   build-test:
+    name: "IntentProof CI: Build and Test"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
