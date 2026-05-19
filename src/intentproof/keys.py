@@ -47,24 +47,31 @@ def _write_keypair_file(key_path: Path, payload: dict[str, str]) -> None:
         raise
 
 
+def _load_keypair(key_path: Path) -> Keypair:
+    _ensure_key_permissions(key_path)
+    raw = key_path.read_text(encoding="utf-8")
+    data = json.loads(raw)
+    return Keypair(
+        private_key=data["privateKey"],
+        instance_id=data["instanceId"],
+    )
+
+
 def load_or_create_keypair(data_dir: Path) -> Keypair:
     key_path = data_dir / "keypair.json"
     if key_path.exists():
-        _ensure_key_permissions(key_path)
-        raw = key_path.read_text(encoding="utf-8")
-        data = json.loads(raw)
-        return Keypair(
-            private_key=data["privateKey"],
-            instance_id=data["instanceId"],
-        )
+        return _load_keypair(key_path)
 
     private_key = base64.b64encode(os.urandom(32)).decode("ascii")
     kp = Keypair(
         private_key=private_key,
         instance_id=f"inst_{_ulid.new()}",
     )
-    _write_keypair_file(
-        key_path,
-        {"privateKey": kp.private_key, "instanceId": kp.instance_id},
-    )
+    try:
+        _write_keypair_file(
+            key_path,
+            {"privateKey": kp.private_key, "instanceId": kp.instance_id},
+        )
+    except FileExistsError:
+        return _load_keypair(key_path)
     return kp

@@ -5,9 +5,10 @@ from __future__ import annotations
 import stat
 import subprocess
 import sys
+import threading
 from pathlib import Path
 
-from intentproof.keys import load_or_create_keypair
+from intentproof.keys import Keypair, load_or_create_keypair
 
 
 def test_new_keypair_created_with_mode_0600(tmp_path: Path) -> None:
@@ -15,6 +16,30 @@ def test_new_keypair_created_with_mode_0600(tmp_path: Path) -> None:
     key_path = tmp_path / "keypair.json"
     mode = stat.S_IMODE(key_path.stat().st_mode)
     assert mode == 0o600
+
+
+def test_concurrent_load_or_create_keypair(tmp_path: Path) -> None:
+    """Parallel configure() must not raise when racing on keypair creation."""
+    barrier = threading.Barrier(8)
+    results: list[Keypair] = []
+    errors: list[BaseException] = []
+
+    def worker() -> None:
+        try:
+            barrier.wait()
+            results.append(load_or_create_keypair(tmp_path))
+        except BaseException as exc:
+            errors.append(exc)
+
+    threads = [threading.Thread(target=worker) for _ in range(8)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert not errors
+    assert len(results) == 8
+    assert len({kp.instance_id for kp in results}) == 1
 
 
 def test_client_module_import_without_home(tmp_path: Path) -> None:
