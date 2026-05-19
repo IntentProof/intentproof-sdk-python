@@ -17,7 +17,11 @@ if TYPE_CHECKING:
     from intentproof.signing import Ed25519PublicKey
 
 SDK_VERSION = "python@0.1.0"
-DEFAULT_DATA_DIR = Path.home() / ".intentproof" / "sdk-python"
+
+
+def default_data_dir() -> Path:
+    """Default SDK data directory (resolved lazily for container imports)."""
+    return Path.home() / ".intentproof" / "sdk-python"
 
 _instance_private_key: Ed25519PrivateKey | None = None
 _instance_id: str | None = None
@@ -41,7 +45,7 @@ def configure(
     if _outbox is not None:
         _outbox.close()
 
-    _data_dir = Path(data_dir) if data_dir else DEFAULT_DATA_DIR
+    _data_dir = Path(data_dir) if data_dir else default_data_dir()
     ensure_dir(_data_dir)
 
     kp = load_or_create_keypair(_data_dir)
