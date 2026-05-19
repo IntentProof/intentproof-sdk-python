@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import inspect
+import logging
 import time
 from contextvars import ContextVar
 from datetime import datetime, timezone
@@ -13,6 +14,8 @@ import ulid as _ulid
 
 from intentproof import client
 from intentproof.signing import event_content_hash, sign_event
+
+logger = logging.getLogger(__name__)
 
 _correlation_id: ContextVar[str | None] = ContextVar(
     "intentproof_correlation_id", default=None
@@ -55,6 +58,10 @@ def _untrusted_payload(inputs: list[Any], output: Any, status: str) -> bool:
     if inputs:
         return True
     return status == "ok" and output is not None
+
+
+def _log_execution_record_failure(exc: BaseException) -> None:
+    logger.warning("[intentproof] execution record failed: %s", exc)
 
 
 def _record_execution(
@@ -111,7 +118,11 @@ def wrap(
     action: str,
     fn: F,
 ) -> F:
-    """Wrap a callable to emit signed ExecutionEvent.v1 records."""
+    """Wrap a callable to emit signed ExecutionEvent.v1 records.
+
+    When the wrapped callable returns normally but recording fails, the
+    result is still returned and the failure is logged.
+    """
 
     if inspect.iscoroutinefunction(fn):
 
@@ -149,7 +160,7 @@ def wrap(
             except Exception as record_exc:
                 if reraise is not None:
                     raise reraise from record_exc
-                raise
+                _log_execution_record_failure(record_exc)
             if reraise is not None:
                 raise reraise
             return result
@@ -190,7 +201,7 @@ def wrap(
         except Exception as record_exc:
             if reraise is not None:
                 raise reraise from record_exc
-            raise
+            _log_execution_record_failure(record_exc)
         if reraise is not None:
             raise reraise
         return result
