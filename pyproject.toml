@@ -17,11 +17,26 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
 ]
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.coverage.run]
+source = ["intentproof"]
+omit = []
+
+[tool.coverage.report]
+fail_under = 95
+show_missing = true
+skip_empty = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+addopts = [
+    "--cov=intentproof",
+    "--cov-report=term-missing",
+    "--cov-fail-under=95",
+]

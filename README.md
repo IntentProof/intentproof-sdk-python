@@ -8,12 +8,15 @@ Early scaffolding repo for IntentProof's Python SDK. Tracks the
 Node SDK's wrap()/exporter/outbox contract so a Python application
 can emit and verify the same signed execution events.
 
-## Planned scope
+## Development
 
-- Event wrapping helpers
-- Correlation and chain management
-- Canonical serialization and signing
-- Hosted ingest transport
+```bash
+pip install -e ".[dev]"
+pytest
+```
+
+CI enforces at least 95% line coverage on `src/intentproof/` (see
+`pyproject.toml` and `scripts/check-coverage.sh`).
 
 ## License
 
