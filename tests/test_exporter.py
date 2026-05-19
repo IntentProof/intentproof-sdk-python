@@ -1,6 +1,8 @@
 import os
+import threading
 
 from intentproof.exporter import ingest_request_headers
+from intentproof.http_exporter import HttpExporter
 
 
 def test_ingest_request_headers_includes_bearer_token() -> None:
@@ -14,6 +16,37 @@ def test_ingest_request_headers_includes_bearer_token() -> None:
             os.environ.pop("INTENTPROOF_INGEST_TOKEN", None)
         else:
             os.environ["INTENTPROOF_INGEST_TOKEN"] = previous
+
+
+def test_enqueue_starts_thread_before_releasing_lock() -> None:
+    order: list[str] = []
+    inner = threading.Lock()
+
+    class TrackingLock:
+        def __enter__(self) -> "TrackingLock":
+            inner.acquire()
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            order.append("lock_release")
+            inner.release()
+
+    exporter = HttpExporter("http://127.0.0.1:9787/v1/events")
+    exporter._lock = TrackingLock()  # type: ignore[assignment]
+
+    original_start = threading.Thread.start
+
+    def tracked_start(self: threading.Thread) -> None:
+        order.append("start")
+        original_start(self)
+
+    threading.Thread.start = tracked_start  # type: ignore[method-assign]
+    try:
+        exporter.enqueue({"schema": "intentproof.event.v1"})
+    finally:
+        threading.Thread.start = original_start  # type: ignore[method-assign]
+
+    assert order.index("start") < order.index("lock_release")
 
 
 def test_ingest_request_headers_omits_authorization_without_token() -> None:

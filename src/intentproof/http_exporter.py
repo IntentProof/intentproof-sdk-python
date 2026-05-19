@@ -48,7 +48,7 @@ class HttpExporter:
         )
         with self._lock:
             self._pending.append(thread)
-        thread.start()
+            thread.start()
 
     def _export_one(self, event: dict[str, Any]) -> None:
         try:
