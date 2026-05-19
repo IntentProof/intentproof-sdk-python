@@ -40,18 +40,16 @@ def configure(
 ) -> None:
     global _instance_private_key, _instance_id, _tenant_id, _outbox, _exporter, _data_dir
 
-    if _exporter is not None:
-        _exporter.flush()
-    if _outbox is not None:
-        _outbox.close()
+    prev_exporter = _exporter
+    prev_outbox = _outbox
 
-    _data_dir = Path(data_dir) if data_dir else default_data_dir()
-    ensure_dir(_data_dir)
+    new_data_dir = Path(data_dir) if data_dir else default_data_dir()
+    ensure_dir(new_data_dir)
 
-    kp = load_or_create_keypair(_data_dir)
-    _instance_private_key = load_private_key(kp.private_key)
-    _instance_id = kp.instance_id
-    _tenant_id = (
+    kp = load_or_create_keypair(new_data_dir)
+    new_private_key = load_private_key(kp.private_key)
+    new_instance_id = kp.instance_id
+    new_tenant_id = (
         tenant_id
         or os.environ.get("INTENTPROOF_TENANT_ID", "").strip()
         or "tnt_default"
@@ -59,11 +57,23 @@ def configure(
 
     resolved_db = db_path or os.environ.get("INTENTPROOF_OUTBOX_PATH", "").strip()
     if not resolved_db:
-        resolved_db = str(_data_dir / "outbox.db")
-    _outbox = Outbox(resolved_db)
+        resolved_db = str(new_data_dir / "outbox.db")
+    new_outbox = Outbox(resolved_db)
 
     ingest = resolve_ingest_url(ingest_url)
-    _exporter = HttpExporter(ingest) if ingest else None
+    new_exporter = HttpExporter(ingest) if ingest else None
+
+    if prev_exporter is not None:
+        prev_exporter.flush()
+    if prev_outbox is not None:
+        prev_outbox.close()
+
+    _data_dir = new_data_dir
+    _instance_private_key = new_private_key
+    _instance_id = new_instance_id
+    _tenant_id = new_tenant_id
+    _outbox = new_outbox
+    _exporter = new_exporter
 
 
 def flush() -> None:

@@ -127,7 +127,7 @@ def wrap(
 
             try:
                 result = await fn(*args, **kwargs)
-            except BaseException as exc:
+            except Exception as exc:
                 status = "error"
                 error_obj = {"message": str(exc)}
                 reraise = exc
@@ -146,7 +146,7 @@ def wrap(
                     status=status,
                     error_obj=error_obj,
                 )
-            except BaseException as record_exc:
+            except Exception as record_exc:
                 if reraise is not None:
                     raise reraise from record_exc
                 raise
@@ -168,7 +168,7 @@ def wrap(
 
         try:
             result = fn(*args, **kwargs)
-        except BaseException as exc:
+        except Exception as exc:
             status = "error"
             error_obj = {"message": str(exc)}
             reraise = exc
@@ -187,7 +187,7 @@ def wrap(
                 status=status,
                 error_obj=error_obj,
             )
-        except BaseException as record_exc:
+        except Exception as record_exc:
             if reraise is not None:
                 raise reraise from record_exc
             raise

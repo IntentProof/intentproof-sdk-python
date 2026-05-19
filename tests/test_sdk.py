@@ -142,6 +142,25 @@ def test_wrap_records_from_worker_thread(sdk_dirs: tuple[str, str]) -> None:
     assert any(e["correlation_id"] == "corr-worker" for e in events)
 
 
+def test_configure_keeps_working_outbox_on_failure(sdk_dirs: tuple[str, str]) -> None:
+    db_path, data_dir = sdk_dirs
+    configure(db_path=db_path, data_dir=data_dir, tenant_id="tnt_a")
+    first = client.get_outbox()
+    fn = wrap(intent="Test", action="test.action", fn=lambda x: x + 1)
+    run_with_correlation_id("corr-before-fail", lambda: fn(1))
+
+    key_path = Path(data_dir) / "keypair.json"
+    key_path.write_text("not-json", encoding="utf-8")
+
+    with pytest.raises(Exception):
+        configure(db_path=db_path, data_dir=data_dir, tenant_id="tnt_a")
+
+    assert client.get_outbox() is first
+    run_with_correlation_id("corr-after-fail", lambda: fn(2))
+    events = client.get_outbox().get_events()
+    assert len(events) == 2
+
+
 def test_configure_closes_previous_outbox(sdk_dirs: tuple[str, str]) -> None:
     db_path, data_dir = sdk_dirs
     configure(db_path=db_path, data_dir=data_dir, tenant_id="tnt_a")

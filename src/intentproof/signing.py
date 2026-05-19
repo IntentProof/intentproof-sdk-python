@@ -67,7 +67,3 @@ def load_private_key(raw_b64: str) -> Ed25519PrivateKey:
     return Ed25519PrivateKey.from_private_bytes(
         base64.b64decode(raw_b64)
     )
-
-
-def public_key_bytes(private_key: Ed25519PrivateKey) -> bytes:
-    return private_key.public_key().public_bytes_raw()
