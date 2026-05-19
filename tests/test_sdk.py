@@ -79,6 +79,48 @@ def test_produces_signed_event_with_sentinel_prev_hash(
     assert ev["untrusted_payload"] is True
 
 
+def test_concurrent_wrap_preserves_chain_positions(
+    sdk_dirs: tuple[str, str],
+) -> None:
+    from intentproof.signing import event_content_hash
+
+    db_path, data_dir = sdk_dirs
+    configure(db_path=db_path, data_dir=data_dir, tenant_id="tnt_a")
+    fn = wrap(intent="Test", action="test.action", fn=lambda x: x)
+    errors: list[BaseException] = []
+    barrier = threading.Barrier(2)
+
+    def worker() -> None:
+        try:
+            barrier.wait(timeout=2.0)
+            for _ in range(25):
+                run_with_correlation_id("corr-race", lambda: fn(1))
+        except BaseException as exc:
+            errors.append(exc)
+
+    threads = [threading.Thread(target=worker) for _ in range(2)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=5.0)
+
+    assert not errors
+    events = [
+        e
+        for e in client.get_outbox().get_events()
+        if e["correlation_id"] == "corr-race"
+    ]
+    assert len(events) == 50
+    positions = sorted(e["chain_position"] for e in events)
+    assert positions == list(range(1, 51))
+
+    by_pos = {e["chain_position"]: e for e in events}
+    assert by_pos[1]["prev_event_hash"].startswith("sha256:")
+    for pos in range(2, 51):
+        prev_hash = event_content_hash(by_pos[pos - 1])
+        assert by_pos[pos]["prev_event_hash"] == prev_hash
+
+
 def test_wrap_records_from_worker_thread(sdk_dirs: tuple[str, str]) -> None:
     db_path, data_dir = sdk_dirs
     configure(db_path=db_path, data_dir=data_dir, tenant_id="tnt_a")

@@ -12,7 +12,7 @@ from typing import Any, Callable, TypeVar
 import ulid as _ulid
 
 from intentproof import client
-from intentproof.signing import SENTINEL_PREV_HASH, event_content_hash, sign_event
+from intentproof.signing import event_content_hash, sign_event
 
 _correlation_id: ContextVar[str | None] = ContextVar(
     "intentproof_correlation_id", default=None
@@ -71,43 +71,35 @@ def _record_execution(
     error_obj: dict[str, Any] | None,
 ) -> None:
     outbox = client.get_outbox()
-    chain_pos = 1
-    prev_hash = SENTINEL_PREV_HASH
-    state = outbox.get_chain_state(correlation_id)
-    if state:
-        chain_pos = state["position"] + 1
-        prev_hash = state["hash"]
 
-    event: dict[str, Any] = {
-        "schema": "intentproof.event.v1",
-        "event_id": event_id,
-        "tenant_id": client.get_tenant_id(),
-        "instance_id": client.get_instance_id(),
-        "correlation_id": correlation_id,
-        "provenance_class": "sdk_attested_evidence",
-        "prev_event_hash": prev_hash,
-        "chain_position": chain_pos,
-        "intent": intent,
-        "action": action,
-        "status": status,
-        "started_at": _iso_timestamp(t0_ms),
-        "completed_at": _iso_timestamp(t1_ms),
-        "duration_ms": t1_ms - t0_ms,
-        "inputs": inputs,
-        "output": output if status == "ok" else None,
-        "error": error_obj,
-        "attributes": {},
-        "untrusted_payload": _untrusted_payload(inputs, output, status),
-        "spec_version": "1.0.0",
-        "sdk_version": client.SDK_VERSION,
-    }
+    def build_signed(chain_pos: int, prev_hash: str) -> tuple[dict[str, Any], str]:
+        event: dict[str, Any] = {
+            "schema": "intentproof.event.v1",
+            "event_id": event_id,
+            "tenant_id": client.get_tenant_id(),
+            "instance_id": client.get_instance_id(),
+            "correlation_id": correlation_id,
+            "provenance_class": "sdk_attested_evidence",
+            "prev_event_hash": prev_hash,
+            "chain_position": chain_pos,
+            "intent": intent,
+            "action": action,
+            "status": status,
+            "started_at": _iso_timestamp(t0_ms),
+            "completed_at": _iso_timestamp(t1_ms),
+            "duration_ms": t1_ms - t0_ms,
+            "inputs": inputs,
+            "output": output if status == "ok" else None,
+            "error": error_obj,
+            "attributes": {},
+            "untrusted_payload": _untrusted_payload(inputs, output, status),
+            "spec_version": "1.0.0",
+            "sdk_version": client.SDK_VERSION,
+        }
+        signed = sign_event(event, client.get_private_key(), client.get_instance_id())
+        return signed, event_content_hash(signed)
 
-    signed = sign_event(event, client.get_private_key(), client.get_instance_id())
-    event_hash = event_content_hash(signed)
-
-    outbox.append_with_chain_state(
-        event_id, signed, correlation_id, chain_pos, event_hash
-    )
+    signed = outbox.record_chained_event(correlation_id, event_id, build_signed)
 
     exporter = client.get_exporter()
     if exporter is not None:

@@ -5,7 +5,10 @@ from __future__ import annotations
 import json
 import sqlite3
 import threading
+from collections.abc import Callable
 from typing import Any
+
+from intentproof.signing import SENTINEL_PREV_HASH
 
 
 class Outbox:
@@ -38,6 +41,58 @@ class Outbox:
             )
             self._db.commit()
 
+    def _next_chain_link(self, correlation_id: str) -> tuple[int, str]:
+        row = self._db.execute(
+            "SELECT last_position, last_hash FROM chains WHERE correlation_id = ?",
+            (correlation_id,),
+        ).fetchone()
+        if row is None:
+            return 1, SENTINEL_PREV_HASH
+        return row[0] + 1, row[1]
+
+    def _persist_chain_event(
+        self,
+        event_id: str,
+        body: dict[str, Any],
+        correlation_id: str,
+        position: int,
+        event_hash: str,
+    ) -> None:
+        self._db.execute(
+            "INSERT INTO events (event_id, body) VALUES (?, ?)",
+            (event_id, json.dumps(body)),
+        )
+        self._db.execute(
+            """
+            INSERT INTO chains (correlation_id, last_position, last_hash)
+            VALUES (?, ?, ?)
+            ON CONFLICT(correlation_id) DO UPDATE SET
+                last_position = excluded.last_position,
+                last_hash = excluded.last_hash
+            """,
+            (correlation_id, position, event_hash),
+        )
+
+    def record_chained_event(
+        self,
+        correlation_id: str,
+        event_id: str,
+        build_signed: Callable[[int, str], tuple[dict[str, Any], str]],
+    ) -> dict[str, Any]:
+        """Reserve chain slot, sign, and persist under one lock."""
+        with self._lock:
+            chain_pos, prev_hash = self._next_chain_link(correlation_id)
+            signed, event_hash = build_signed(chain_pos, prev_hash)
+            try:
+                self._persist_chain_event(
+                    event_id, signed, correlation_id, chain_pos, event_hash
+                )
+                self._db.commit()
+            except Exception:
+                self._db.rollback()
+                raise
+            return signed
+
     def append_with_chain_state(
         self,
         event_id: str,
@@ -49,19 +104,8 @@ class Outbox:
         """Persist event and chain head in one transaction."""
         with self._lock:
             try:
-                self._db.execute(
-                    "INSERT INTO events (event_id, body) VALUES (?, ?)",
-                    (event_id, json.dumps(body)),
-                )
-                self._db.execute(
-                    """
-                    INSERT INTO chains (correlation_id, last_position, last_hash)
-                    VALUES (?, ?, ?)
-                    ON CONFLICT(correlation_id) DO UPDATE SET
-                        last_position = excluded.last_position,
-                        last_hash = excluded.last_hash
-                    """,
-                    (correlation_id, position, event_hash),
+                self._persist_chain_event(
+                    event_id, body, correlation_id, position, event_hash
                 )
                 self._db.commit()
             except Exception:
