@@ -2,8 +2,17 @@
 
 import os
 import unittest
+from unittest.mock import patch
 
-from intentproof.canon import canonicalize
+from intentproof.canon import (
+    _CanonObject,
+    _encode_int,
+    _encode_object,
+    _format_es6,
+    _integer_to_scientific,
+    _to_shortest_scientific,
+    canonicalize,
+)
 
 
 # Ported from intentproof-spec/conformance/jcs_vectors.ts
@@ -189,6 +198,74 @@ class TestMalformedJSON(unittest.TestCase):
     def test_rejects_unclosed_object(self):
         with self.assertRaises(ValueError):
             canonicalize('{')
+
+
+class TestLargeIntegers(unittest.TestCase):
+    def test_safe_integer_uses_decimal(self):
+        self.assertEqual(canonicalize(9007199254740992), "9007199254740992")
+
+    def test_out_of_range_integer_raises(self):
+        with self.assertRaises(ValueError):
+            canonicalize(10**400)
+
+    def test_integer_overflow_on_float_conversion_raises(self):
+        with patch("intentproof.canon.float", side_effect=OverflowError):
+            with self.assertRaises(ValueError):
+                canonicalize(10**400)
+
+
+class TestUnsupportedTypes(unittest.TestCase):
+    def test_rejects_non_string_object_keys(self):
+        with self.assertRaises(TypeError):
+            canonicalize({1: "x"})
+
+    def test_rejects_unsupported_values(self):
+        with self.assertRaises(TypeError):
+            canonicalize(object())
+
+    def test_rejects_unsupported_nested_values(self):
+        with self.assertRaises(TypeError):
+            canonicalize([object()])
+
+
+class TestFloatEdgeBranches(unittest.TestCase):
+    def test_zero_float(self):
+        self.assertEqual(canonicalize(0.0), "0")
+
+    def test_negative_zero_string(self):
+        self.assertEqual(canonicalize("-0"), "0")
+
+    def test_trailing_zero_decimal_string(self):
+        self.assertEqual(canonicalize("5.0"), "5")
+
+    def test_integer_to_scientific_zero_strings(self):
+        self.assertEqual(_integer_to_scientific("0"), ("0", 0))
+        self.assertEqual(_integer_to_scientific("000"), ("0", 0))
+
+    def test_to_shortest_scientific_without_dot_in_repr(self):
+        with patch("intentproof.canon.repr", return_value="42"):
+            self.assertEqual(_to_shortest_scientific(42.0), ("42", 1))
+
+    def test_format_es6_when_digits_round_to_zero(self):
+        with patch(
+            "intentproof.canon._to_shortest_scientific", return_value=("0", 0)
+        ):
+            self.assertEqual(_format_es6(1.0), "0")
+
+    def test_large_integer_beyond_safe_range_uses_float_formatting(self):
+        value = 2**53 + 1
+        self.assertEqual(canonicalize(value), _encode_int(value))
+
+    def test_encode_int_rejects_infinite_float_conversion(self):
+        with patch("intentproof.canon.float", return_value=float("inf")):
+            with self.assertRaises(ValueError):
+                _encode_int(2**60)
+
+    def test_encode_object_rejects_unsupported_nested_type(self):
+        obj = _CanonObject([("key", 1)])
+        obj.values["key"] = frozenset({1})
+        with self.assertRaises(TypeError):
+            _encode_object(obj)
 
 
 class TestPolicyBodyCrossCheck(unittest.TestCase):
