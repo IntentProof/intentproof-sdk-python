@@ -33,6 +33,35 @@ class Outbox:
         )
         self._db.commit()
 
+    def append_with_chain_state(
+        self,
+        event_id: str,
+        body: dict[str, Any],
+        correlation_id: str,
+        position: int,
+        event_hash: str,
+    ) -> None:
+        """Persist event and chain head in one transaction."""
+        try:
+            self._db.execute(
+                "INSERT INTO events (event_id, body) VALUES (?, ?)",
+                (event_id, json.dumps(body)),
+            )
+            self._db.execute(
+                """
+                INSERT INTO chains (correlation_id, last_position, last_hash)
+                VALUES (?, ?, ?)
+                ON CONFLICT(correlation_id) DO UPDATE SET
+                    last_position = excluded.last_position,
+                    last_hash = excluded.last_hash
+                """,
+                (correlation_id, position, event_hash),
+            )
+            self._db.commit()
+        except Exception:
+            self._db.rollback()
+            raise
+
     def get_events(self) -> list[dict[str, Any]]:
         rows = self._db.execute("SELECT body FROM events").fetchall()
         return [json.loads(row[0]) for row in rows]

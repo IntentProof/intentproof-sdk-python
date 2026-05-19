@@ -105,8 +105,9 @@ def _record_execution(
     signed = sign_event(event, client.get_private_key(), client.get_instance_id())
     event_hash = event_content_hash(signed)
 
-    outbox.append(event_id, signed)
-    outbox.set_chain_state(correlation_id, chain_pos, event_hash)
+    outbox.append_with_chain_state(
+        event_id, signed, correlation_id, chain_pos, event_hash
+    )
 
     exporter = client.get_exporter()
     if exporter is not None:
@@ -140,18 +141,23 @@ def wrap(
                 reraise = exc
 
             t1_ms = int(time.time() * 1000)
-            _record_execution(
-                intent=intent,
-                action=action,
-                correlation_id=correlation_id,
-                event_id=event_id,
-                t0_ms=t0_ms,
-                t1_ms=t1_ms,
-                inputs=list(args),
-                output=result,
-                status=status,
-                error_obj=error_obj,
-            )
+            try:
+                _record_execution(
+                    intent=intent,
+                    action=action,
+                    correlation_id=correlation_id,
+                    event_id=event_id,
+                    t0_ms=t0_ms,
+                    t1_ms=t1_ms,
+                    inputs=list(args),
+                    output=result,
+                    status=status,
+                    error_obj=error_obj,
+                )
+            except BaseException as record_exc:
+                if reraise is not None:
+                    raise reraise from record_exc
+                raise
             if reraise is not None:
                 raise reraise
             return result
@@ -176,18 +182,23 @@ def wrap(
             reraise = exc
 
         t1_ms = int(time.time() * 1000)
-        _record_execution(
-            intent=intent,
-            action=action,
-            correlation_id=correlation_id,
-            event_id=event_id,
-            t0_ms=t0_ms,
-            t1_ms=t1_ms,
-            inputs=list(args),
-            output=result,
-            status=status,
-            error_obj=error_obj,
-        )
+        try:
+            _record_execution(
+                intent=intent,
+                action=action,
+                correlation_id=correlation_id,
+                event_id=event_id,
+                t0_ms=t0_ms,
+                t1_ms=t1_ms,
+                inputs=list(args),
+                output=result,
+                status=status,
+                error_obj=error_obj,
+            )
+        except BaseException as record_exc:
+            if reraise is not None:
+                raise reraise from record_exc
+            raise
         if reraise is not None:
             raise reraise
         return result

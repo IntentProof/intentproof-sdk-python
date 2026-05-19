@@ -127,6 +127,31 @@ def test_verifiable_ed25519_signature(sdk_dirs: tuple[str, str]) -> None:
     assert verify_event_signature(ev, client.get_public_key())
 
 
+def test_wrap_preserves_app_exception_when_record_fails(
+    sdk_dirs: tuple[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    db_path, data_dir = sdk_dirs
+    configure(db_path=db_path, data_dir=data_dir, tenant_id="tnt_a")
+
+    def boom() -> None:
+        raise ValueError("boom")
+
+    fn = wrap(intent="Test", action="test.action", fn=boom)
+
+    def fail_record(**_kwargs: object) -> None:
+        raise RuntimeError("outbox unavailable")
+
+    monkeypatch.setattr(
+        "intentproof.instrumentation._record_execution", fail_record
+    )
+
+    with pytest.raises(ValueError, match="boom") as exc_info:
+        fn()
+
+    assert exc_info.value.__cause__ is not None
+    assert isinstance(exc_info.value.__cause__, RuntimeError)
+
+
 def test_wrap_reraises_exception(sdk_dirs: tuple[str, str]) -> None:
     db_path, data_dir = sdk_dirs
     configure(db_path=db_path, data_dir=data_dir, tenant_id="tnt_a")
