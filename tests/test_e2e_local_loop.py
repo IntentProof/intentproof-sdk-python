@@ -206,8 +206,10 @@ def test_wrap_without_inputs_and_none_output_is_trusted(
     assert ev["untrusted_payload"] is False
 
 
-def test_wrap_record_failure_without_app_error_raises(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+def test_wrap_record_failure_without_app_error_logs_and_returns(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     configure(
         db_path=str(tmp_path / "outbox.db"),
@@ -223,8 +225,11 @@ def test_wrap_record_failure_without_app_error_raises(
     )
 
     fn = wrap(intent="Record fail", action="record.fail", fn=lambda: 1)
-    with pytest.raises(RuntimeError, match="outbox unavailable"):
-        fn()
+    with caplog.at_level("WARNING", logger="intentproof.instrumentation"):
+        assert fn() == 1
+    assert any(
+        "execution record failed" in record.message for record in caplog.records
+    )
 
 
 def test_sdk_not_configured_errors() -> None:

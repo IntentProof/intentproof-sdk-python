@@ -93,8 +93,10 @@ def test_async_wrap_preserves_app_error_when_record_fails(
     assert isinstance(exc_info.value.__cause__, RuntimeError)
 
 
-def test_async_wrap_record_failure_without_app_error_raises(
-    tmp_path, monkeypatch: pytest.MonkeyPatch
+def test_async_wrap_record_failure_without_app_error_logs_and_returns(
+    tmp_path,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     configure(
         db_path=str(tmp_path / "outbox.db"),
@@ -114,5 +116,8 @@ def test_async_wrap_record_failure_without_app_error_raises(
         "intentproof.instrumentation._record_execution", fail_record
     )
 
-    with pytest.raises(RuntimeError, match="outbox unavailable"):
-        asyncio.run(fn())
+    with caplog.at_level("WARNING", logger="intentproof.instrumentation"):
+        assert asyncio.run(fn()) == 1
+    assert any(
+        "execution record failed" in record.message for record in caplog.records
+    )
