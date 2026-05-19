@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import json
 import tempfile
+import threading
 from pathlib import Path
 
 import pytest
@@ -76,6 +77,27 @@ def test_produces_signed_event_with_sentinel_prev_hash(
     assert ev["signature"]["value"]
     assert ev["provenance_class"] == "sdk_attested_evidence"
     assert ev["untrusted_payload"] is True
+
+
+def test_wrap_records_from_worker_thread(sdk_dirs: tuple[str, str]) -> None:
+    db_path, data_dir = sdk_dirs
+    configure(db_path=db_path, data_dir=data_dir, tenant_id="tnt_a")
+    fn = wrap(intent="Test", action="test.action", fn=lambda x: x + 1)
+    errors: list[BaseException] = []
+
+    def worker() -> None:
+        try:
+            run_with_correlation_id("corr-worker", lambda: fn(2))
+        except BaseException as exc:
+            errors.append(exc)
+
+    thread = threading.Thread(target=worker)
+    thread.start()
+    thread.join(timeout=2.0)
+
+    assert not errors
+    events = client.get_outbox().get_events()
+    assert any(e["correlation_id"] == "corr-worker" for e in events)
 
 
 def test_configure_closes_previous_outbox(sdk_dirs: tuple[str, str]) -> None:
