@@ -6,12 +6,16 @@ import base64
 import json
 import logging
 import os
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
 import ulid as _ulid
 
 logger = logging.getLogger(__name__)
+
+_LOAD_ATTEMPTS = 50
+_LOAD_RETRY_SEC = 0.02
 
 
 @dataclass(frozen=True)
@@ -42,19 +46,32 @@ def _write_keypair_file(key_path: Path, payload: dict[str, str]) -> None:
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             handle.write(content)
+            handle.flush()
+            os.fsync(handle.fileno())
     except Exception:
         key_path.unlink(missing_ok=True)
         raise
 
 
 def _load_keypair(key_path: Path) -> Keypair:
-    _ensure_key_permissions(key_path)
-    raw = key_path.read_text(encoding="utf-8")
-    data = json.loads(raw)
-    return Keypair(
-        private_key=data["privateKey"],
-        instance_id=data["instanceId"],
-    )
+    last_error: Exception | None = None
+    for _ in range(_LOAD_ATTEMPTS):
+        try:
+            _ensure_key_permissions(key_path)
+            raw = key_path.read_text(encoding="utf-8")
+            if not raw.strip():
+                raise ValueError("empty keypair file")
+            data = json.loads(raw)
+            private_key = data["privateKey"]
+            instance_id = data["instanceId"]
+            if not isinstance(private_key, str) or not isinstance(instance_id, str):
+                raise ValueError("invalid keypair file")
+            return Keypair(private_key=private_key, instance_id=instance_id)
+        except (OSError, json.JSONDecodeError, ValueError, KeyError, TypeError) as exc:
+            last_error = exc
+            time.sleep(_LOAD_RETRY_SEC)
+    assert last_error is not None
+    raise last_error
 
 
 def load_or_create_keypair(data_dir: Path) -> Keypair:
