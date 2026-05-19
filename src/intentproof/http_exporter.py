@@ -40,6 +40,9 @@ class HttpExporter:
     def ingest_url(self) -> str:
         return self._ingest_url
 
+    def _prune_finished_threads(self) -> None:
+        self._pending = [t for t in self._pending if t.is_alive()]
+
     def enqueue(self, event: Mapping[str, Any]) -> None:
         thread = threading.Thread(
             target=self._export_one,
@@ -47,6 +50,7 @@ class HttpExporter:
             daemon=True,
         )
         with self._lock:
+            self._prune_finished_threads()
             self._pending.append(thread)
             thread.start()
 
@@ -61,4 +65,5 @@ class HttpExporter:
             threads = list(self._pending)
             self._pending.clear()
         for thread in threads:
-            thread.join()
+            if thread.is_alive():
+                thread.join()

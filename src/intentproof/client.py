@@ -36,6 +36,11 @@ def configure(
 ) -> None:
     global _instance_private_key, _instance_id, _tenant_id, _outbox, _exporter, _data_dir
 
+    if _exporter is not None:
+        _exporter.flush()
+    if _outbox is not None:
+        _outbox.close()
+
     _data_dir = Path(data_dir) if data_dir else DEFAULT_DATA_DIR
     ensure_dir(_data_dir)
 

@@ -78,6 +78,20 @@ def test_produces_signed_event_with_sentinel_prev_hash(
     assert ev["untrusted_payload"] is True
 
 
+def test_configure_closes_previous_outbox(sdk_dirs: tuple[str, str]) -> None:
+    db_path, data_dir = sdk_dirs
+    configure(db_path=db_path, data_dir=data_dir, tenant_id="tnt_a")
+    first = client.get_outbox()
+
+    configure(db_path=db_path, data_dir=data_dir, tenant_id="tnt_a")
+    second = client.get_outbox()
+
+    assert first is not second
+    fn = wrap(intent="Test", action="test.action", fn=lambda x: x + 1)
+    run_with_correlation_id("corr-reconfig", lambda: fn(1))
+    assert len(client.get_outbox().get_events()) == 1
+
+
 def test_chain_continuity_across_reconfigure(sdk_dirs: tuple[str, str]) -> None:
     db_path, data_dir = sdk_dirs
     configure(db_path=db_path, data_dir=data_dir, tenant_id="tnt_a")

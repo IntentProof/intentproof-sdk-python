@@ -1,6 +1,8 @@
 import os
 import threading
 
+import pytest
+
 from intentproof.exporter import ingest_request_headers
 from intentproof.http_exporter import HttpExporter
 
@@ -16,6 +18,27 @@ def test_ingest_request_headers_includes_bearer_token() -> None:
             os.environ.pop("INTENTPROOF_INGEST_TOKEN", None)
         else:
             os.environ["INTENTPROOF_INGEST_TOKEN"] = previous
+
+
+def test_enqueue_prunes_finished_threads(monkeypatch: pytest.MonkeyPatch) -> None:
+    exporter = HttpExporter("http://127.0.0.1:9787/v1/events")
+    monkeypatch.setattr(
+        "intentproof.http_exporter.post_execution_event",
+        lambda _url, _event: None,
+    )
+
+    for _ in range(3):
+        exporter.enqueue({"schema": "intentproof.event.v1"})
+
+    with exporter._lock:
+        threads = list(exporter._pending)
+    for thread in threads:
+        thread.join(timeout=2.0)
+
+    exporter.enqueue({"schema": "intentproof.event.v1"})
+
+    with exporter._lock:
+        assert len(exporter._pending) == 1
 
 
 def test_enqueue_starts_thread_before_releasing_lock() -> None:
