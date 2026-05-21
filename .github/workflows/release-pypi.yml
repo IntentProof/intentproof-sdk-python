@@ -92,13 +92,16 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Sync package version
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.release_version }}
         run: |
           set -euo pipefail
           python3 - <<'PY'
+          import os
           import re
           from pathlib import Path
 
-          version = "${{ steps.release.outputs.release_version }}"
+          version = os.environ["RELEASE_VERSION"]
           path = Path("pyproject.toml")
           text = path.read_text(encoding="utf-8")
           updated, count = re.subn(
