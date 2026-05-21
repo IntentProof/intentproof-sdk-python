@@ -3,16 +3,24 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "intentproof-sdk-python"
+name = "intentproof"
 version = "0.1.0"
-description = "Python SDK for IntentProof"
+description = "Python SDK for signed IntentProof execution events"
 readme = "README.md"
 license = {text = "Apache-2.0"}
 requires-python = ">=3.9"
+authors = [{name = "IntentProof"}]
+keywords = ["intentproof", "provenance", "sdk"]
 dependencies = [
     "cryptography>=42.0.0",
     "ulid-py>=1.1.0",
 ]
+
+[project.urls]
+Homepage = "https://intentproof.io"
+Repository = "https://github.com/IntentProof/intentproof-sdk-python"
+Documentation = "https://github.com/IntentProof/intentproof-sdk-python#readme"
+Issues = "https://github.com/IntentProof/intentproof-sdk-python/issues"
 
 [project.optional-dependencies]
 dev = [

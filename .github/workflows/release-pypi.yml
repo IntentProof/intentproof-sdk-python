@@ -1,0 +1,218 @@
+name: release pypi
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      release_ref:
+        description: Git ref to build and publish from.
+        required: true
+        default: refs/heads/main
+        type: string
+      release_version:
+        description: SemVer version for dry-run metadata (without v prefix).
+        required: true
+        default: 0.0.0-dryrun
+        type: string
+      publish_to_pypi:
+        description: Publish to PyPI with PEP 740 attestations (requires trusted publisher).
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  test:
+    name: "IntentProof Release: Test Python Package"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_ref || github.ref }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Run tests with coverage
+        run: pytest -q
+
+      - name: Enforce coverage threshold
+        run: bash ./scripts/check-coverage.sh 95
+
+  build:
+    name: "IntentProof Release: Build Python Distributions"
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      artifact_paths: ${{ steps.dists.outputs.artifact_paths }}
+      release_ref: ${{ steps.release.outputs.release_ref }}
+      release_version: ${{ steps.release.outputs.release_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_ref || github.ref }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Resolve release metadata
+        id: release
+        env:
+          INPUT_RELEASE_REF: ${{ inputs.release_ref }}
+          INPUT_RELEASE_VERSION: ${{ inputs.release_version }}
+        run: |
+          set -euo pipefail
+          semver_tag='^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$'
+
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            release_ref="$INPUT_RELEASE_REF"
+            release_version="$INPUT_RELEASE_VERSION"
+          else
+            release_ref="${GITHUB_REF}"
+            release_version="${GITHUB_REF_NAME#v}"
+            if [[ ! "$release_ref" =~ $semver_tag ]]; then
+              echo "tag ref must match vMAJOR.MINOR.PATCH: ${release_ref}" >&2
+              exit 1
+            fi
+          fi
+
+          {
+            echo "release_ref=${release_ref}"
+            echo "release_version=${release_version}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Sync package version
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.release_version }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          version = os.environ["RELEASE_VERSION"]
+          path = Path("pyproject.toml")
+          text = path.read_text(encoding="utf-8")
+          updated, count = re.subn(
+              r'^version = "[^"]+"$',
+              f'version = "{version}"',
+              text,
+              count=1,
+              flags=re.MULTILINE,
+          )
+          if count != 1:
+              raise SystemExit("failed to update pyproject.toml version")
+          path.write_text(updated, encoding="utf-8")
+          PY
+
+      - name: Build Python distributions
+        run: |
+          python -m pip install --upgrade build
+          python -m build --outdir dist .
+
+      - name: Export distribution paths
+        id: dists
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find dist -maxdepth 1 -type f | sort)
+          test "${#files[@]}" -gt 0
+          {
+            echo "artifact_paths<<EOF"
+            printf '%s\n' "${files[@]}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-release-package
+          path: dist/*
+
+  publish:
+    name: "IntentProof Release: Publish Python Package"
+    needs: build
+    if: github.event_name != 'workflow_dispatch' || inputs.publish_to_pypi
+    permissions:
+      attestations: write
+      contents: write
+      id-token: write
+      packages: write
+    uses: IntentProof/intentproof-tools/.github/workflows/release-build-sign.yml@e982df238d9f111bc1f59b7473988c0d538dabb6
+    with:
+      artifact_kind: pypi
+      subject_name: intentproof
+      release_version: ${{ needs.build.outputs.release_version }}
+      release_ref: ${{ needs.build.outputs.release_ref }}
+      pypi_dist_dir: dist
+      pypi_package_path: .
+      artifact_download_name: python-release-package
+      attest_to_rekor: ${{ github.event_name != 'workflow_dispatch' }}
+
+  sign:
+    name: "IntentProof Release: Sign Python Distributions"
+    needs: build
+    permissions:
+      attestations: write
+      contents: write
+      id-token: write
+      packages: write
+    uses: IntentProof/intentproof-tools/.github/workflows/release-build-sign.yml@e982df238d9f111bc1f59b7473988c0d538dabb6
+    with:
+      artifact_kind: generic
+      subject_name: intentproof
+      release_version: ${{ needs.build.outputs.release_version }}
+      release_ref: ${{ needs.build.outputs.release_ref }}
+      artifact_paths: ${{ needs.build.outputs.artifact_paths }}
+      artifact_download_name: python-release-package
+      artifact_download_path: dist
+      attest_to_rekor: ${{ github.event_name != 'workflow_dispatch' }}
+
+  upload-release:
+    name: "IntentProof Release: Publish Python Release Artifacts"
+    needs:
+      - build
+      - sign
+      - publish
+    if: >-
+      github.event_name != 'workflow_dispatch'
+      && needs.build.result == 'success'
+      && needs.sign.result == 'success'
+      && needs.publish.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-release-package
+          path: release-package
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-signing-metadata
+          path: release-signing-metadata
+
+      - name: Upload distributions and signing metadata to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find release-package release-signing-metadata -type f | sort)
+          test "${#files[@]}" -gt 0
+
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --generate-notes
+          fi
+          gh release upload "$RELEASE_TAG" "${files[@]}" --clobber
