@@ -142,21 +142,33 @@ jobs:
     name: "IntentProof Release: Publish Python Package"
     needs: build
     if: github.event_name != 'workflow_dispatch' || inputs.publish_to_pypi
+    runs-on: ubuntu-latest
     permissions:
       attestations: write
-      contents: write
+      contents: read
       id-token: write
       packages: write
-    uses: IntentProof/intentproof-tools/.github/workflows/release-build-sign.yml@e982df238d9f111bc1f59b7473988c0d538dabb6
-    with:
-      artifact_kind: pypi
-      subject_name: intentproof
-      release_version: ${{ needs.build.outputs.release_version }}
-      release_ref: ${{ needs.build.outputs.release_ref }}
-      pypi_dist_dir: dist
-      pypi_package_path: .
-      artifact_download_name: python-release-package
-      attest_to_rekor: ${{ github.event_name != 'workflow_dispatch' }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-release-package
+          path: dist
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate Python distributions
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade twine
+          test -d dist
+          twine check dist/*
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
+          attestations: true
 
   sign:
     name: "IntentProof Release: Sign Python Distributions"
