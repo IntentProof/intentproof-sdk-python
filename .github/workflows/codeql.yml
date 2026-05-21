@@ -1,4 +1,5 @@
 name: codeql
+
 on:
   push:
     branches: [main]
@@ -6,17 +7,22 @@ on:
     branches: [main]
   schedule:
     - cron: "0 6 * * 1"
+
 permissions:
   actions: read
   contents: read
   security-events: write
+
 jobs:
   allowlist-expiry:
     name: "IntentProof Security: CodeQL Allowlist"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: bash ./scripts/check-codeql-allowlist.sh
+
+      - name: Validate allowlist expiry dates
+        run: bash ./scripts/check-codeql-allowlist.sh
+
   gitleaks:
     name: "IntentProof Security: Secret Scan"
     runs-on: ubuntu-latest
@@ -24,14 +30,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Install gitleaks
-        run: |
-          curl -sSfL \
-            "https://github.com/gitleaks/gitleaks/releases/download/v8.24.2/gitleaks_8.24.2_linux_x64.tar.gz" \
-            | tar -xz
-          sudo mv gitleaks /usr/local/bin/
+
       - name: Run gitleaks
-        run: gitleaks detect --source . --config .gitleaks.toml --verbose --redact
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+
   analyze:
     name: "IntentProof Security: CodeQL (${{ matrix.language }})"
     needs: allowlist-expiry
@@ -42,14 +47,21 @@ jobs:
         language: [python]
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-      - run: pip install -e ".[dev]"
-      - uses: github/codeql-action/init@v3
+          python-version: "3.11"
+
+      - name: Install package for CodeQL
+        run: pip install -e ".[dev]"
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
           queries: security-and-quality
-      - uses: github/codeql-action/analyze@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
         with:
           category: "/language:${{ matrix.language }}"
