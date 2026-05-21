@@ -8,13 +8,13 @@ useDefault = true
 
 [allowlist]
 description = "Global allowlist paths for false positives"
+regexTarget = "match"
 paths = [
   '''\.git/''',
   '''\.coverage''',
   '''tests/fixtures/''',
 ]
-
-[allowlist.regexTarget]
+# Example test vectors and documentation placeholders only.
 regexes = [
   '''EXAMPLE|PLACEHOLDER|REDACTED|xxxxxxxx''',
 ]
