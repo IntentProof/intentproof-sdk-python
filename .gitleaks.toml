@@ -17,4 +17,5 @@ paths = [
 # Example test vectors and documentation placeholders only.
 regexes = [
   '''EXAMPLE|PLACEHOLDER|REDACTED|xxxxxxxx''',
+  '''_instance_private_key:\s*Ed25519PrivateKey''',
 ]
