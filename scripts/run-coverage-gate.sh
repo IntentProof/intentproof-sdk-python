@@ -7,6 +7,7 @@ cd "$ROOT"
 
 if [[ -x "$ROOT/.venv/bin/python" ]]; then
   PYTHON="$ROOT/.venv/bin/python"
+  export PATH="$ROOT/.venv/bin:$PATH"
 else
   PYTHON=python3
 fi
