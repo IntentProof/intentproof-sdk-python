@@ -45,5 +45,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Materialize Python lockfile for OSV
+        run: |
+          pip install -e ".[dev]"
+          pip freeze --exclude-editable > requirements-osv.txt
+
       - name: Run OSV-Scanner gate
-        run: bash ./scripts/run-osv-scanner-gate.sh
+        run: bash ./scripts/run-osv-scanner-gate.sh . .osv-scanner.toml requirements-osv.txt
