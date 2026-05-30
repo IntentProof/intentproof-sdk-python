@@ -1,4 +1,4 @@
-"""HTTP export helpers for hosted ingest."""
+"""HTTP export helpers for optional event ingest."""
 
 from __future__ import annotations
 
