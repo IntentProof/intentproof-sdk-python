@@ -12,5 +12,16 @@ else
   PYTHON=python3
 fi
 
+COVERAGE=()
+if command -v coverage >/dev/null 2>&1; then
+  COVERAGE=(coverage)
+elif "$PYTHON" -m coverage --version >/dev/null 2>&1; then
+  COVERAGE=("$PYTHON" -m coverage)
+else
+  echo "coverage CLI not found; install dev deps with: pip install -e \".[dev]\"" >&2
+  exit 2
+fi
+
 "$PYTHON" -m pytest -q
-exec bash ./scripts/check-coverage.sh 95
+"${COVERAGE[@]}" json -o coverage.json
+exec bash ./scripts/check-coverage.sh coverage.json

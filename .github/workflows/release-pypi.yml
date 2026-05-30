@@ -46,7 +46,7 @@ jobs:
         run: pytest -q
 
       - name: Enforce coverage threshold
-        run: bash ./scripts/check-coverage.sh 95
+        run: bash ./scripts/run-coverage-gate.sh
 
   build:
     name: "IntentProof Release: Build Python Distributions"
