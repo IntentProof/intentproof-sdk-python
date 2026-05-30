@@ -37,11 +37,11 @@ vectors. Run `pytest` locally before publishing.
 
 ```bash
 pytest
-bash ./scripts/check-coverage.sh 95
+bash ./scripts/run-coverage-gate.sh
 ```
 
-CI enforces at least 95% line coverage on `src/intentproof/` (see
-`pyproject.toml` and `scripts/check-coverage.sh`).
+Tiered coverage: **90%** total and **95%** on `src/intentproof/` (see
+`scripts/README-coverage-tiers.md`).
 
 ## Release
 

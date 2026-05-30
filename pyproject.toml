@@ -36,7 +36,6 @@ source = ["intentproof"]
 omit = []
 
 [tool.coverage.report]
-fail_under = 95
 show_missing = true
 skip_empty = true
 
@@ -46,5 +45,4 @@ pythonpath = ["src"]
 addopts = [
     "--cov=intentproof",
     "--cov-report=term-missing",
-    "--cov-fail-under=95",
 ]
