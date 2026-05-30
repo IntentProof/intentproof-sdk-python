@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import json
+import os
 import tempfile
 import threading
 from pathlib import Path
@@ -287,8 +288,15 @@ def test_flush_waits_for_exporter(monkeypatch: pytest.MonkeyPatch) -> None:
         assert len(posted) == 1
 
 
+def _signing_fixture_dir() -> Path:
+    spec_dir = os.environ.get("INTENTPROOF_SPEC_DIR", "").strip()
+    if spec_dir:
+        return Path(spec_dir) / "golden" / "sdk-signing"
+    return Path(__file__).parent / "fixtures"
+
+
 def test_signing_golden_bytes() -> None:
-    fixture_dir = Path(__file__).parent / "fixtures"
+    fixture_dir = _signing_fixture_dir()
     unsigned = json.loads(
         (fixture_dir / "signing_unsigned_event.json").read_text(encoding="utf-8")
     )
