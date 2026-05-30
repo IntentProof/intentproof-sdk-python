@@ -29,8 +29,19 @@ cat >"$root/coverage.json" <<'EOF'
 }
 EOF
 
-if bash "$root/scripts/check-coverage.sh" "$root/coverage.json" >/dev/null 2>&1; then
-  echo "FAIL: expected gate to fail for missing critical prefix" >&2
+output=""
+code=0
+output="$(cd "$root" && bash scripts/check-coverage.sh coverage.json 2>&1)" || code=$?
+
+if [[ "$code" -ne 1 ]]; then
+  echo "FAIL: expected exit 1 for missing critical prefix, got ${code}" >&2
+  echo "$output" >&2
+  exit 1
+fi
+
+if ! grep -q "no statements in profile, FAIL" <<<"$output"; then
+  echo "FAIL: expected critical-prefix failure message, got:" >&2
+  echo "$output" >&2
   exit 1
 fi
 

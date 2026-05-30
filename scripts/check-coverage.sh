@@ -8,7 +8,13 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONF="${ROOT}/scripts/coverage-tiers.conf"
-COVERAGE_JSON="${1:-coverage.json}"
+COVERAGE_JSON_ARG="${1:-coverage.json}"
+
+if [[ "$COVERAGE_JSON_ARG" == /* ]]; then
+  COVERAGE_JSON_PATH="$COVERAGE_JSON_ARG"
+else
+  COVERAGE_JSON_PATH="${ROOT}/${COVERAGE_JSON_ARG}"
+fi
 
 if [[ ! -f "$CONF" ]]; then
   echo "coverage tiers config not found: $CONF" >&2
@@ -23,8 +29,8 @@ if [[ -z "${TOTAL_MIN:-}" ]]; then
   exit 2
 fi
 
-if [[ ! -f "${ROOT}/${COVERAGE_JSON}" ]]; then
-  echo "coverage json not found: ${ROOT}/${COVERAGE_JSON} (run pytest with --cov first)" >&2
+if [[ ! -f "$COVERAGE_JSON_PATH" ]]; then
+  echo "coverage json not found: $COVERAGE_JSON_PATH (run pytest with --cov first)" >&2
   exit 2
 fi
 
@@ -59,7 +65,7 @@ report_threshold() {
 
 stats_for_prefix() {
   local prefix="$1"
-  python3 - "$ROOT/$COVERAGE_JSON" "$prefix" <<'PY'
+  python3 - "$COVERAGE_JSON_PATH" "$prefix" <<'PY'
 import json
 import sys
 
@@ -68,6 +74,18 @@ prefix = sys.argv[2]
 data = json.load(open(path))
 covered = 0
 total = 0
+
+def covered_statements(summary, entry, stmts):
+    if "covered_lines" in summary:
+        return int(summary["covered_lines"])
+    missing_lines = entry.get("missing_lines")
+    if isinstance(missing_lines, list):
+        return stmts - len(missing_lines)
+    missing_count = summary.get("missing_lines")
+    if isinstance(missing_count, int):
+        return stmts - missing_count
+    return 0
+
 for file_path, entry in data.get("files", {}).items():
     if prefix not in file_path.replace("\\", "/"):
         continue
@@ -76,11 +94,7 @@ for file_path, entry in data.get("files", {}).items():
     if stmts == 0:
         continue
     total += stmts
-    file_covered = summary.get("covered_lines")
-    if file_covered is None:
-        missing = entry.get("missing_lines") or summary.get("missing_lines") or []
-        file_covered = stmts - len(missing)
-    covered += int(file_covered)
+    covered += covered_statements(summary, entry, stmts)
 print(covered, total)
 PY
 }
@@ -90,7 +104,7 @@ $(stats_for_prefix "")
 EOF
 
 if [[ -z "$TOTAL_STMTS" || "$TOTAL_STMTS" -eq 0 ]]; then
-  echo "unable to read total coverage from $COVERAGE_JSON" >&2
+  echo "unable to read total coverage from $COVERAGE_JSON_PATH" >&2
   exit 2
 fi
 
