@@ -23,8 +23,8 @@ if [[ -z "${TOTAL_MIN:-}" ]]; then
   exit 2
 fi
 
-if [[ ! -f "$COVERAGE_JSON" ]]; then
-  echo "coverage json not found: $COVERAGE_JSON (run pytest with --cov first)" >&2
+if [[ ! -f "${ROOT}/${COVERAGE_JSON}" ]]; then
+  echo "coverage json not found: ${ROOT}/${COVERAGE_JSON} (run pytest with --cov first)" >&2
   exit 2
 fi
 
@@ -64,9 +64,12 @@ for file_path, entry in data.get("files", {}).items():
     stmts = int(summary.get("num_statements", 0))
     if stmts == 0:
         continue
-    pct = float(summary.get("percent_covered", 0))
     total += stmts
-    covered += int(round(stmts * pct / 100.0))
+    file_covered = summary.get("covered_lines")
+    if file_covered is None:
+        missing = entry.get("missing_lines") or summary.get("missing_lines") or []
+        file_covered = stmts - len(missing)
+    covered += int(file_covered)
 print(covered, total)
 PY
 }
@@ -92,7 +95,8 @@ while IFS= read -r rule; do
 $(stats_for_prefix "$prefix")
 EOF
   if [[ "$t" -eq 0 ]]; then
-    echo "  ${prefix} (min ${min}%): no statements in profile, skipped"
+    echo "  ${prefix} (min ${min}%): no statements in profile, FAIL" >&2
+    fail=1
     continue
   fi
   report_threshold "  ${prefix}" "$c" "$t" "$min" || fail=1
