@@ -8,7 +8,7 @@ Python SDK for signing IntentProof execution events locally.
 
 - `wrap()` / exporter / outbox aligned with the Node and Go SDKs
 - Ed25519 signing and canonical JSON
-- No hosted ingest required for local capture and bundle export
+- Local capture, signing, and bundle export
 
 ## Install
 
