@@ -16,7 +16,7 @@ from intentproof.signing import load_private_key
 if TYPE_CHECKING:
     from intentproof.signing import Ed25519PublicKey
 
-SDK_VERSION = "python@0.1.0"
+SDK_VERSION = "python@0.2.1"
 
 
 def default_data_dir() -> Path:
